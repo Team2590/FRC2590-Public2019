@@ -9,15 +9,14 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import frc.subsystems.Drivetrain;
 
-
 public class Robot extends TimedRobot {
 
   private Joystick leftJoystick;
   private Joystick rightJoystick;
 
-  //susbsystems
+  // susbsystems
   private static Drivetrain drivetrain;
-  
+
   /**
    * Initialization of robot, when robot is turned on
    */
@@ -53,25 +52,14 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
   }
+
   /**
    * Teleoperated Mode, Driver controls robot
    */
   @Override
   public void teleopPeriodic() {
-    if(leftJoystick == null) {
-      System.out.println("left joy is null");
-    }
-    if(rightJoystick == null) {
-      System.out.println("right joy is null");
-    }
-    if(drivetrain == null) {
-      System.out.println("drivetrain is null");
-    }
-    if(drivetrain.getRobotDrive() == null){
-      System.out.println("diffdrive is null");
-    }
-
-    drivetrain.getRobotDrive().arcadeDrive(leftJoystick.getY() * .33, rightJoystick.getX() * .33);
+    //inverts Y axis; pushing the joystick forward drives forward
+    drivetrain.getRobotDrive().arcadeDrive(-leftJoystick.getY() * .5, rightJoystick.getX() * .5);
   }
 
   /**

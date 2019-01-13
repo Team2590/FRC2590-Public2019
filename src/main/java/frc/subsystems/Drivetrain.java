@@ -30,20 +30,30 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 		}
 		return driveInstance;
   }
-
+  //allows us to drive the robot via arcade drive
   DifferentialDrive driveSystem;
   
-  CANSparkMax leftDrive;
-  CANSparkMax rightDrive;
-
+  //motor controllers for the DT, set up in master/slave fashion
+  
+  CANSparkMax leftDriveMaster;
+  CANSparkMax leftDriveSlave;
+  CANSparkMax rightDriveMaster;
+  CANSparkMax rightDriveSlave;
+  
   Drivetrain() {
     //Motor controllers, currently testing SPARK MCs
-    //potential issue with deviceID (CAN ID, look at rio's ip to set ID values)
-    leftDrive = new CANSparkMax(LEFT_DRIVE_PWM, MotorType.kBrushless);
-    rightDrive = new CANSparkMax(RIGHT_DRIVE_PWM, MotorType.kBrushless);
+    
+    leftDriveMaster = new CANSparkMax(left_drive_master, MotorType.kBrushless);
+    leftDriveSlave = new CANSparkMax(left_drive_slave, MotorType.kBrushless);
+    rightDriveMaster = new CANSparkMax(right_drive_master, MotorType.kBrushless);
+    rightDriveSlave = new CANSparkMax(right_drive_slave, MotorType.kBrushless);
+
+    //set the slave controllers to follow their respective masters(same side)
+    leftDriveSlave.follow(leftDriveMaster);
+    rightDriveSlave.follow(rightDriveMaster);
 
     //differential drive system (arcade drive is deprecated)
-    driveSystem = new DifferentialDrive(leftDrive, rightDrive);
+    driveSystem = new DifferentialDrive(leftDriveMaster, rightDriveMaster);
   }
 
   /**
@@ -52,8 +62,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
    * @param right: drive speed for the right motor controller
    */
   public void setSpeeds(double leftSpeed, double rightSpeed){
-    leftDrive.set(leftSpeed);
-    rightDrive.set(rightSpeed);
+    leftDriveMaster.set(leftSpeed);
+    rightDriveMaster.set(rightSpeed);
   }
 
   public DifferentialDrive getRobotDrive(){
