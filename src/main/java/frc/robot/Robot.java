@@ -7,7 +7,10 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
+import frc.subsystems.CargoIntake;
 import frc.subsystems.Drivetrain;
+import frc.subsystems.Elevator;
+import frc.subsystems.HatchIntake;
 
 public class Robot extends TimedRobot {
 
@@ -16,6 +19,9 @@ public class Robot extends TimedRobot {
 
   // susbsystems
   private static Drivetrain drivetrain;
+  private static HatchIntake hatchIntake;
+  private static CargoIntake cargoIntake;
+  private static Elevator elevator;
 
   /**
    * Initialization of robot, when robot is turned on
@@ -26,6 +32,9 @@ public class Robot extends TimedRobot {
     rightJoystick = new Joystick(1);
 
     drivetrain = Drivetrain.getDrivetrainInstance();
+    hatchIntake = HatchIntake.getHatchIntakeInstance();
+    cargoIntake = CargoIntake.getCargoIntakeInstance();
+    elevator = Elevator.getElevatorInstance();
   }
 
   @Override
@@ -58,8 +67,22 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    //inverts Y axis; pushing the joystick forward drives forward
-    drivetrain.getRobotDrive().arcadeDrive(-leftJoystick.getY() * .5, rightJoystick.getX() * .5);
+    
+    // inverts Y axis; pushing the joystick forward drives forward
+    drivetrain.teleopDrive(-leftJoystick.getY() * 0.5, rightJoystick.getX() * 0.5);
+
+    // Hatch Intake controls
+    if (rightJoystick.getRawButton(1)) {
+      hatchIntake.runIntake();
+    } else if (rightJoystick.getRawButton(2)) {
+      hatchIntake.reverseIntake();
+    } else {
+      hatchIntake.stopIntake();
+    }
+
+    // updates each subsystem at the tail end of each loop
+    hatchIntake.update();
+    drivetrain.update();
   }
 
   /**
@@ -69,7 +92,21 @@ public class Robot extends TimedRobot {
   public void testPeriodic() {
   }
 
+  // get methods for subsystems
   public static Drivetrain getDrivetrainInstance() {
     return drivetrain;
   }
+
+  public static HatchIntake getHatchIntakeInstance() {
+    return hatchIntake;
+  }
+
+  public static CargoIntake getCargoIntakeInstance() {
+    return cargoIntake;
+  }
+
+  public static Elevator getElevatorInstance() {
+    return elevator;
+  }
+
 }
