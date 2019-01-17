@@ -15,6 +15,9 @@ public interface RobotMap {
     public static final int hatch_intake = 5;
     public static final int cargo_intake = 6;
 
-    // CAN Device IDs for the intake motors
+    // CAN Device IDs for the elevator motors
     public static final int elevator_motor = 7;
+
+    //Solenoid channel for Hatch Intake
+    public static final int intake_solenoid = 0;
 }

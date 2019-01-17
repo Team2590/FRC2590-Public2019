@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.robot.RobotMap;
 
 /**
- * Intakes the cargo (playground balls) from the floor
+ * Moves the Cargo and Hatch Panels to set heights to score points
  */
 public class Elevator extends Subsystem implements RobotMap {
 

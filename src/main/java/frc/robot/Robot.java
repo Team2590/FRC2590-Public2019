@@ -5,17 +5,17 @@
  */
 package frc.robot;
 
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import frc.subsystems.CargoIntake;
 import frc.subsystems.Drivetrain;
 import frc.subsystems.Elevator;
 import frc.subsystems.HatchIntake;
+import frc.util.NemesisJoystick;
 
 public class Robot extends TimedRobot {
 
-  private Joystick leftJoystick;
-  private Joystick rightJoystick;
+  private NemesisJoystick leftJoystick;
+  private NemesisJoystick rightJoystick;
 
   // susbsystems
   private static Drivetrain drivetrain;
@@ -28,8 +28,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    leftJoystick = new Joystick(0);
-    rightJoystick = new Joystick(1);
+    leftJoystick = new NemesisJoystick(0);
+    rightJoystick = new NemesisJoystick(1);
 
     drivetrain = Drivetrain.getDrivetrainInstance();
     hatchIntake = HatchIntake.getHatchIntakeInstance();
