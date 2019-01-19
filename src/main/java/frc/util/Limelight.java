@@ -8,30 +8,30 @@
 package frc.util;
 
 import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.command.Subsystem;
 
 /**
- * Limelight camera class for vision processing
- * Uses network tables relayed from the camera to track
- * retroreflective targets
+ * Limelight camera class for vision processing Uses network tables relayed from
+ * the camera to track retroreflective targets
  */
-public class Limelight extends Subsystem implements LimelightSettings{
+public class Limelight extends Subsystem implements LimelightSettings {
 
-  //singleton
+  // singleton
   private static Camera cameraInstance = null;
+
   public static Camera getCameraInstance() {
-    if(cameraInstance == null) {
+    if (cameraInstance == null) {
       cameraInstance = new Camera();
     }
     return cameraInstance;
   }
 
-  //network table from limelight camera
+  // network table from limelight camera
   NetworkTable table;
 
-  //target coordinates and values
+  // target coordinates and values
   double tx, ty, tz;
 
   public Limelight() {
@@ -43,6 +43,30 @@ public class Limelight extends Subsystem implements LimelightSettings{
 
   }
 
+  /**
+   * Calculates the angleto the retro-reflective target
+   * 
+   * @return the vertical angle from the camera to the target
+   */
+  public double veticalAngleToTarget() {
+    try {
+      // difference between target and camera Y values, times the degrees/pixel
+      return ((ty - CY) * YDPP);
+    } catch (Exception e) {
+      DriverStation.reportError("Target Not Found", false);
+      return 0;
+    }
+  }
+
+  public double hAngleToTarget() {
+    try {
+      // difference between target and camera X values, times the degrees/pixel
+      return ((tx - CX) * XDPP);
+    } catch (Exception e) {
+      DriverStation.reportError("Target Not Found!", false);
+      return 0;
+    }
+  }
 
   @Override
   public void initDefaultCommand() {
