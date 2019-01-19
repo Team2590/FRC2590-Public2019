@@ -47,11 +47,11 @@ public class HatchIntake extends Subsystem implements RobotMap {
       break;
 
     case INTAKE:
-      hatchIntakeMotor.set(-1.0);
+      hatchIntakeMotor.set(0.5);
       break;
 
     case OUTTAKE:
-      hatchIntakeMotor.set(1.0);
+      hatchIntakeMotor.set(-0.35);
       break;
 
     case STOWED:

@@ -52,7 +52,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   //straight: Left Joystick Y axis; turn: Right Joystick X Axis
   double straightPower, turnPower;
 
-  Drivetrain() {
+  public Drivetrain() {
     // Motor controllers, currently testing SPARK MCs
     leftDriveMaster = new CANSparkMax(left_drive_master, MotorType.kBrushless);
     leftDriveSlave = new CANSparkMax(left_drive_slave, MotorType.kBrushless);

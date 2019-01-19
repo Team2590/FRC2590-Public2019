@@ -50,11 +50,11 @@ public class CargoIntake extends Subsystem implements RobotMap {
       break;
 
     case INTAKE:
-      cargoIntakeMotor.set(-1.0);
+      cargoIntakeMotor.set(1.0);
       break;
 
     case OUTTAKE:
-      cargoIntakeMotor.set(1.0);
+      cargoIntakeMotor.set(-1.0);
       break;
 
     default:
