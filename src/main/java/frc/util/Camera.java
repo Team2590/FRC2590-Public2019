@@ -25,7 +25,6 @@ public class Camera extends Subsystem {
 
   //Camera Types (axis, usb cam, limelight)
   //access the LimeLight web pipeline via: http://10.te.am.11:5801
-    //NEED TO SET LIMELIGHT TO STATIC IP
     
   public Camera() {
 

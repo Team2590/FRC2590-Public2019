@@ -9,63 +9,82 @@ package frc.util;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.command.Subsystem;
 
 /**
- * Limelight camera class for vision processing Uses network tables relayed from
- * the camera to track retroreflective targets
+ * Limelight camera class for vision processing 
+ * Uses network tables relayed from the camera to track retroreflective targets
+ * 
+ * Access the Limelight web pipeline via: http://10.25.90.11:5801
+ * Access the Limelight camera feed via: http://10.25.90.11:5800
  */
 public class Limelight extends Subsystem implements LimelightSettings {
 
   // singleton
-  private static Camera cameraInstance = null;
+  private static Limelight limelightInstance = null;
 
-  public static Camera getCameraInstance() {
-    if (cameraInstance == null) {
-      cameraInstance = new Camera();
+  public static Limelight getLimelightInstance() {
+    if (limelightInstance == null) {
+      limelightInstance = new Limelight();
     }
-    return cameraInstance;
+    return limelightInstance;
   }
 
   // network table from limelight camera
   NetworkTable table;
 
   // target coordinates and values
-  double tx, ty, tz;
+  double tx, ty, tz, tv;
 
   public Limelight() {
     table = NetworkTableInstance.getDefault().getTable("limelight");
 
-    tx = 0.0;
-    ty = 0.0;
-    tz = 0.0;
+    tx = 0.0; //Horizontal Offset From Crosshair To Target (-27 degrees to 27 degrees)
+    ty = 0.0; //Vertical Offset From Crosshair To Target (-20.5 degrees to 20.5 degrees)
+    tz = 0.0; //distance from the camera to the target
+    tv = 0.0; //whether the limelight has any valid targets (0 or 1)
+  }
 
+
+  public void update() {
+    tx = table.getEntry("tx").getDouble(0);
+    ty = table.getEntry("ty").getDouble(0);
+    tv = table.getEntry("tv").getDouble(0);
   }
 
   /**
-   * Calculates the angleto the retro-reflective target
+   * Calculates the angle to the retro-reflective target
    * 
    * @return the vertical angle from the camera to the target
    */
-  public double veticalAngleToTarget() {
-    try {
-      // difference between target and camera Y values, times the degrees/pixel
-      return ((ty - CY) * YDPP);
-    } catch (Exception e) {
-      DriverStation.reportError("Target Not Found", false);
-      return 0;
+  public double verticalAngleToTarget() {
+    if(tv == 1) {
+      return ty;
+    } else {
+      return 0.0;
     }
   }
 
-  public double hAngleToTarget() {
-    try {
-      // difference between target and camera X values, times the degrees/pixel
-      return ((tx - CX) * XDPP);
-    } catch (Exception e) {
-      DriverStation.reportError("Target Not Found!", false);
-      return 0;
+  /**
+   * Calculates the angle to the retro-reflective target
+   * 
+   * @return the horizontal angle from the camera to the target
+   */
+  public double horizontalAngleToTarget() {
+    if(tv == 1) {
+      return tx;
+    } else {
+      return 0.0;
     }
+  }
+
+  /**
+   * Calculates the distance to the retro-reflective target
+   * 
+   * @return the horizontal distance from the camera to the target
+   */
+  public double distanceToTarget() {
+    return (TARGET_HEIGHT-CAMERA_HEIGHT)/ Math.tan(CAMERA_ANGLE+verticalAngleToTarget());
   }
 
   @Override

@@ -31,6 +31,6 @@ public interface LimelightSettings {
     // dependent on the mounting of the camera, field measurements, etc.
     public static final double CAMERA_ANGLE = 0; // in degrees
     public static final double TARGET_HEIGHT = 0; // in inches
-    public static final double CAMERA_HEIGHT = 4;
+    public static final double CAMERA_HEIGHT = 4; //in inches
 
 }
