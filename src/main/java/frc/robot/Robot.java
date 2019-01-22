@@ -81,6 +81,12 @@ public class Robot extends TimedRobot {
       hatchIntake.stopIntake();
     }
 
+    if(rightJoystick.getRawButton(3)) {
+      hatchIntake.drop();
+    } else {
+      hatchIntake.stow();
+    }
+
     // updates each subsystem at the tail end of each loop
     hatchIntake.update();
     drivetrain.update();

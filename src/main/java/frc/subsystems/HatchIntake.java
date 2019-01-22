@@ -26,7 +26,7 @@ public class HatchIntake extends Subsystem implements RobotMap {
   private States hatchState = States.STOPPED;
 
   private enum States {
-    STOPPED, INTAKE, OUTTAKE, STOWED, DROPPED
+    STOPPED, INTAKE, OUTTAKE
   }
 
   private Solenoid intakePiston;
@@ -54,14 +54,6 @@ public class HatchIntake extends Subsystem implements RobotMap {
       hatchIntakeMotor.set(-0.35);
       break;
 
-    case STOWED:
-      intakePiston.set(false);
-      break;
-
-    case DROPPED:
-      intakePiston.set(true);
-      break;
-
     default:
       hatchIntakeMotor.set(0.0);
       System.out.println("Hatch Intake Default State");
@@ -79,6 +71,14 @@ public class HatchIntake extends Subsystem implements RobotMap {
 
   public void reverseIntake() {
     hatchState = States.OUTTAKE;
+  }
+
+  public void stow() {
+    intakePiston.set(false);
+  }
+
+  public void drop() {
+    intakePiston.set(true);
   }
 
   @Override
