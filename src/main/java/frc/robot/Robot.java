@@ -72,13 +72,22 @@ public class Robot extends TimedRobot {
     // inverts Y axis; pushing the joystick forward drives forward
     drivetrain.teleopDrive(-leftJoystick.getY() * 0.5, rightJoystick.getX() * 0.5);
 
-    // Hatch Intake controls
+    // Hatch Intake controls for Intaking, Spitting, and Stopping
     if (rightJoystick.getRawButton(1)) {
+      System.out.println("In teleoPeriodic doing freaking hatch button");        
+   
       hatchIntake.runIntake();
     } else if (rightJoystick.getRawButton(2)) {
       hatchIntake.reverseIntake();
     } else {
       hatchIntake.stopIntake();
+    }
+
+    // Hatch Intake controls for Stowing and Dropping
+    if (leftJoystick.getRawButton(2)) {
+      hatchIntake.dropIntake();
+    } else {
+      hatchIntake.stowIntake();
     }
 
     // updates each subsystem at the tail end of each loop

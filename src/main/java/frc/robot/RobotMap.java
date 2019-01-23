@@ -12,7 +12,7 @@ public interface RobotMap {
     public static final int right_drive_slave = 3;
 
     // CAN Device IDs for the intake motors
-    public static final int hatch_intake = 5;
+    public static final int hatch_intake = 5; //change back to 5
     public static final int cargo_intake = 6;
 
     // CAN Device IDs for the elevator motors

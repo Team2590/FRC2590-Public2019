@@ -99,7 +99,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
       break;
 
     default:
-      System.out.println("You've hit the deafult case in Drivetrain");
+      System.out.println("You've hit the default case in Drivetrain");
       break;
 
     }

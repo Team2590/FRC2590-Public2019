@@ -15,6 +15,7 @@ import frc.robot.RobotMap;
 
 /**
  * Moves the Cargo and Hatch Panels to set heights to score points
+ * @author Harsh Padhye, Chinmay Savanur
  */
 public class Elevator extends Subsystem implements RobotMap {
 

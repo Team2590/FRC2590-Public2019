@@ -44,22 +44,27 @@ public class HatchIntake extends Subsystem implements RobotMap {
     switch (hatchState) {
     case STOPPED:
       hatchIntakeMotor.set(0.0);
+      System.out.println("Hatch intake stopped");
       break;
 
     case INTAKE:
       hatchIntakeMotor.set(0.5);
+      System.out.println("Hatch being intaked|intaken|grabbed");
       break;
 
     case OUTTAKE:
       hatchIntakeMotor.set(-0.35);
+      System.out.println("Hatch being outaked");
       break;
 
     case STOWED:
       intakePiston.set(false);
+      System.out.println("Hatch being stowed");
       break;
 
     case DROPPED:
       intakePiston.set(true);
+      System.out.println("Hatch being dropped");
       break;
 
     default:
@@ -71,6 +76,7 @@ public class HatchIntake extends Subsystem implements RobotMap {
 
   public void runIntake() {
     hatchState = States.INTAKE;
+    System.out.println("In runIntake!!!");
   }
 
   public void stopIntake() {
@@ -79,6 +85,14 @@ public class HatchIntake extends Subsystem implements RobotMap {
 
   public void reverseIntake() {
     hatchState = States.OUTTAKE;
+  }
+
+  public void stowIntake() {
+    hatchState = States.STOWED;
+  }
+
+  public void dropIntake() {
+    hatchState = States.DROPPED;
   }
 
   @Override
