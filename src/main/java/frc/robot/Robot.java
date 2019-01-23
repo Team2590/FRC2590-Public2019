@@ -83,11 +83,10 @@ public class Robot extends TimedRobot {
       hatchIntake.stopIntake();
     }
 
-    // Hatch Intake controls for Stowing and Dropping
-    if (leftJoystick.getRawButton(2)) {
-      hatchIntake.dropIntake();
+    if(rightJoystick.getRawButton(3)) {
+      hatchIntake.drop();
     } else {
-      hatchIntake.stowIntake();
+      hatchIntake.stow();
     }
 
     // updates each subsystem at the tail end of each loop

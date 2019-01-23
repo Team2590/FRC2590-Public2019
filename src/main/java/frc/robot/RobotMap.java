@@ -19,5 +19,5 @@ public interface RobotMap {
     public static final int elevator_motor = 7;
 
     //Solenoid channel for Hatch Intake
-    public static final int intake_solenoid = 0;
+    public static final int intake_solenoid = 4;
 }
