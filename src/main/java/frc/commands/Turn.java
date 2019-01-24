@@ -14,7 +14,7 @@ import frc.robot.Robot;
  * Turns to a given angle
  * @author Chinmay Savanur
  * */
-public class Turn {
+public class Turn implements NemesisRunnable{
 
   private double setpoint;
   private boolean hasStarted;
