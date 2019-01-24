@@ -8,33 +8,38 @@
 package frc.commands;
 
 import frc.auto.NemesisRunnable;
-import frc.commands.DriveStraight;;
+import frc.robot.Robot;
 
 /**
- * Aligns the robot in respect to the vision targets during the Sandstorm period of a match
+ * Turns to a given angle
  * @author Chinmay Savanur
- */
-public class AutoAlign implements NemesisRunnable {
+ * */
+public class Turn {
 
-    /**
-     * Automatically aligns the robot using the Limelight camera
-     */
-    public AutoAlign() {
+  private double setpoint;
+  private double hasStarted;
 
+  public Turn(double angle) {
+    setpoint = angle;
+    hasStarted = false;
+    System.out.println("stp " + setpoint);
+  }
+
+  @Override
+  public void run() {
+    if(!hasStarted) {
+      
     }
+  }
 
-    @Override
-    public void run() {
-        
-    }
+  @Override
+  public boolean isDone() {
+      return true;
+  }
 
-    @Override
-    public boolean isDone() {
-        return true;
-    }
+  @Override 
+  public String getKey() {
+      return null;
+  }
 
-    @Override 
-    public String getKey() {
-        return "AUTO ALIGN";
-    }
 }
