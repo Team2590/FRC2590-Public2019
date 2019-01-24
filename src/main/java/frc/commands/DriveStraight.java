@@ -4,7 +4,6 @@ import frc.auto.NemesisRunnable;
 
 public class DriveStraight implements NemesisRunnable {
 
-    private boolean isFast;
     private boolean isInitialized;
     private double howFar;
     private double angleToDrive;
@@ -28,6 +27,6 @@ public class DriveStraight implements NemesisRunnable {
 
     @Override 
     public String getKey() {
-        return "STRAIGHT ";
+        return "STRAIGHT";
     }
 }

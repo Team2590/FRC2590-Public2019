@@ -10,7 +10,7 @@ package frc.controllers;
 import edu.wpi.first.wpilibj.Timer;
 
 /**
- * Add your docs here.
+ * Basic Proportional, Integral, Derivative feedback control loop
  */
 public class PID implements Controller {
 
@@ -25,14 +25,16 @@ public class PID implements Controller {
 
     boolean done;
 
-    public PID(double kP, double kI, double kD) {
+    //consider using PID Source and PIDOutput so that calculate can be written
+    //directly from this class rather than returning a function
+    public PID(double kP, double kI, double kD, double tolerance) {
         this.kP = kP;
         this.kI = kI;
         this.kD = kD;
         errorSum = 0.0;
         lastError = 0.0;
         lastTime = 0.0;
-        tolerance = 0.0;
+        this.tolerance = tolerance;
 
         cycles = 0;
 
@@ -49,7 +51,7 @@ public class PID implements Controller {
         double error = setpoint - current; //difference between desired value and current value
         double time = Timer.getFPGATimestamp() * 1000; //current time
         double dt = time - lastTime; //timestep
-        double errorRate = (error - lastError) / dt; //rate of change of error with respect to time
+        double errorDelta = (error - lastError); //change in error
 
         errorSum += error * dt; //integrates error over time
 
@@ -69,10 +71,11 @@ public class PID implements Controller {
             return 0.0;
         }
 
-        return (kP * error) + (kI * errorSum) + (kD * errorRate);
+        return (kP * error) + (kI * errorSum) + (kD * errorDelta);
     }
 
     public boolean isDone() {
         return done;
     }
+
 }
