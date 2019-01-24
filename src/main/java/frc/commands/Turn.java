@@ -17,7 +17,7 @@ import frc.robot.Robot;
 public class Turn {
 
   private double setpoint;
-  private double hasStarted;
+  private boolean hasStarted;
 
   public Turn(double angle) {
     setpoint = angle;
