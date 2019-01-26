@@ -7,9 +7,11 @@
 
 package frc.subsystems;
 
+import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import frc.robot.RobotMap;
@@ -48,27 +50,40 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   private CANSparkMax rightDriveMaster;
   private CANSparkMax rightDriveSlave;
 
+  // encoders for the DT, preinstalled in NEO motors
+  private CANEncoder leftDriveEncoder;
+  private CANEncoder rightDriveEncoder;
+
+  // gear shifting piston
+  private Solenoid shiftingPiston;
+
   // these variables are substitutes for teleop joystick commands
-  //straight: Left Joystick Y axis; turn: Right Joystick X Axis
+  // straight: Left Joystick Y axis; turn: Right Joystick X Axis
   double straightPower, turnPower;
 
   public Drivetrain() {
     // Motor controllers, currently testing SPARK MCs
-    leftDriveMaster = new CANSparkMax(left_drive_master, MotorType.kBrushless);
-    leftDriveSlave = new CANSparkMax(left_drive_slave, MotorType.kBrushless);
-    rightDriveMaster = new CANSparkMax(right_drive_master, MotorType.kBrushless);
-    rightDriveSlave = new CANSparkMax(right_drive_slave, MotorType.kBrushless);
+    leftDriveMaster = new CANSparkMax(LEFT_DRIVE_MASTER, MotorType.kBrushless);
+    leftDriveSlave = new CANSparkMax(LEFT_DRIVE_SLAVE, MotorType.kBrushless);
+    rightDriveMaster = new CANSparkMax(RIGHT_DIRVE_MASTER, MotorType.kBrushless);
+    rightDriveSlave = new CANSparkMax(RIGHT_DRIVE_SLAVE, MotorType.kBrushless);
 
     // set the slave controllers to follow their respective masters(same side)
     leftDriveSlave.follow(leftDriveMaster);
     rightDriveSlave.follow(rightDriveMaster);
 
-    // differential drive system (arcade drive is deprecated)
+    // instantiates drive encoders from their NEO motors
+    leftDriveEncoder = leftDriveMaster.getEncoder();
+    rightDriveEncoder = rightDriveMaster.getEncoder();
+
     driveSystem = new DifferentialDrive(leftDriveMaster, rightDriveMaster);
 
-    //setting numerical variables to the default values
+    // for shifting between low and high gear (low true, high false)
+    shiftingPiston = new Solenoid(GEAR_SHIFT_SOLENOID);
+
+    // setting numerical variables to the default values
     straightPower = 0.0;
-    turnPower = 0.0; 
+    turnPower = 0.0;
   }
 
   // updates the drivetrain's state with every iteration of teleopPeriodic()
@@ -136,11 +151,30 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     rightDriveMaster.set(rightSpeed);
   }
 
+  /**
+   * This method reads the current speed of the drive motors and automatically
+   * determines which gear the robot should be in (high = false, low = true)
+   */
+  public void automaticGearShift() {
+    // averages the two sides to find center speed
+    double robotSpeed = (leftDriveEncoder.getVelocity() + rightDriveEncoder.getVelocity()) / 2;
+
+    shiftingPiston.set(robotSpeed < MAX_LOW_GEAR_VELOCITY); // need to see if velocity returns ft/s
+  }
+
+  /**
+   * Forces drivetrain to desired gear
+   * 
+   * @param isLowGear: true if the robot should be in low gear, false if the robot
+   *        should be in high gear
+   */
+  public void manualGearShift(boolean isLowGear) {
+    shiftingPiston.set(isLowGear);
+  }
+
   public DifferentialDrive getRobotDrive() {
     return driveSystem;
   }
-
-  
 
   @Override
   public void initDefaultCommand() {

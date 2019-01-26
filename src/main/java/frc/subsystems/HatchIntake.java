@@ -30,13 +30,15 @@ public class HatchIntake extends Subsystem implements RobotMap {
   }
 
   private Solenoid intakePiston;
+  private Solenoid tcvPiston;
   private CANSparkMax hatchIntakeMotor;
 
   // constructor
   public HatchIntake() {
-    intakePiston = new Solenoid(intake_solenoid);
+    intakePiston = new Solenoid(INTAKE_SOLENOID);
+    tcvPiston = new Solenoid(TCV_SOLENOID);
     // the hatch intake motor is connected to a 775, hence it is brushed
-    hatchIntakeMotor = new CANSparkMax(hatch_intake, MotorType.kBrushed);
+    hatchIntakeMotor = new CANSparkMax(HATCH_INTAKE, MotorType.kBrushed);
   }
 
   // called every loop of teleop periodic
@@ -83,6 +85,14 @@ public class HatchIntake extends Subsystem implements RobotMap {
 
   public void drop() {
     intakePiston.set(true);
+  }
+
+  public void extendTCV() {
+    tcvPiston.set(true);
+  }
+
+  public void retractTCV() {
+    tcvPiston.set(false);
   }
 
   @Override

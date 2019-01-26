@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.command.Subsystem;
  * 
  * Access the Limelight web pipeline via: http://10.25.90.11:5801 
  * Access the Limelight camera feed via: http://10.25.90.11:5800
+ * Access the Limelight IP camera in GRIP via: http://10.25.90.11:5802
  */
 public class Limelight extends Subsystem implements LimelightSettings {
 

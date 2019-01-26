@@ -40,7 +40,7 @@ public class Elevator extends Subsystem implements RobotMap {
   // constructor
   public Elevator() {
     // the elevator motor is connected to a 775, hence it is brushed
-    elevatorMotor = new CANSparkMax(elevator_motor, MotorType.kBrushed);
+    elevatorMotor = new CANSparkMax(ELEVATOR_MOTOR, MotorType.kBrushed);
   }
 
   // called every loop of teleop periodic

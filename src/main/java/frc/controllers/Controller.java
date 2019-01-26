@@ -20,10 +20,8 @@ public interface Controller {
 
   /**
    * calculates the output power of the controller based on the current position
-   * @param current: current value of sensor
-   * @return the output power to the motor
    */
-  public double calculate(double current);
+  public void calculate();
 
   /**
    * checks whether the current value is within the required threshold to stop the controller

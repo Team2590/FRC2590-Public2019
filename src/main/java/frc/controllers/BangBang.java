@@ -7,8 +7,11 @@
 
 package frc.controllers;
 
+import edu.wpi.first.wpilibj.PIDOutput;
+import edu.wpi.first.wpilibj.PIDSource;
+
 /**
- * Bang Bang controller for rudimentary motion control
+ * Bang Bang controller for basic motion control and tracking
  * Constantly oscillates a motor between two values to compensate for overshoot
  */
 public class BangBang implements Controller {
@@ -19,10 +22,16 @@ public class BangBang implements Controller {
 
     private boolean done;
 
-    public BangBang(double tolerance, double controlSpeed) {
+    private PIDSource source;
+    private PIDOutput output;
+
+    public BangBang(double tolerance, double controlSpeed, PIDSource source, PIDOutput output) {
         this.setpoint = 0;
         this.tolerance = tolerance;
         this.controlSpeed = controlSpeed;
+
+        this.source = source;
+        this.output = output;
 
         this.done = true;
     }
@@ -31,18 +40,18 @@ public class BangBang implements Controller {
         this.setpoint = setpoint;
     }
 
-    public double calculate(double current) {
+    public void calculate() {
 
         //checks if controller is within a reasonable tolerance to stop the motor
-        if(Math.abs(current - setpoint) < tolerance) {
+        if(Math.abs(source.pidGet() - setpoint) < tolerance) {
             done = true;
-            return 0.0; //cuts speed entirely, relies on motor's inertia to keep speed
+            output.pidWrite(0.0); //cuts speed entirely, relies on motor's inertia to keep speed
         }
 
-        if(current > setpoint) {
-            return -controlSpeed; //drive the motor in reverse to drop current speed
+        if(source.pidGet() > setpoint) {
+            output.pidWrite(-controlSpeed); //drive the motor in reverse to drop current speed
         } else {
-            return controlSpeed; //drive the motor forward to increase current speed
+            output.pidWrite(controlSpeed); //drive the motor forward to increase current speed
         }
     }
 

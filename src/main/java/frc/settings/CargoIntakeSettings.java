@@ -5,22 +5,10 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-package frc.controllers;
+package frc.settings;
 
 /**
  * Add your docs here.
  */
-public class MotionProfile implements Controller {
-
-    public void setSetpoint(double setpoint) {
-
-    }
-
-    public void calculate() {
-        
-    }
-
-    public boolean isDone() {
-        return true;
-    }
+public interface CargoIntakeSettings {
 }

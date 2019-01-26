@@ -8,7 +8,7 @@
 package frc.commands;
 
 import frc.auto.NemesisRunnable;
-import frc.commands.DriveStraight;;
+import frc.commands.DriveStraight;
 
 /**
  * Aligns the robot in respect to the vision targets during the Sandstorm period of a match

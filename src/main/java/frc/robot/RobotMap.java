@@ -5,19 +5,25 @@ package frc.robot;
  * Interface to organize the various ports, gains, PWM Channels, CAN IDs
  */
 public interface RobotMap {
-    // CAN Device IDs for the drive motor
-    public static final int left_drive_master = 4;
-    public static final int left_drive_slave = 1;
-    public static final int right_drive_master = 2;
-    public static final int right_drive_slave = 3;
+    // Drivetrain
+    public static final int LEFT_DRIVE_MASTER = 4;
+    public static final int LEFT_DRIVE_SLAVE = 1;
+    public static final int RIGHT_DIRVE_MASTER = 2;
+    public static final int RIGHT_DRIVE_SLAVE = 3;
 
-    // CAN Device IDs for the intake motors
-    public static final int hatch_intake = 5; //change back to 5
-    public static final int cargo_intake = 6;
+    public static final int GEAR_SHIFT_SOLENOID = 2; //SUBJECT TO CHANGE
 
-    // CAN Device IDs for the elevator motors
-    public static final int elevator_motor = 7;
 
-    //Solenoid channel for Hatch Intake
-    public static final int intake_solenoid = 4;
+    // Cargo intake
+    public static final int CARGO_INTAKE = 6;
+
+
+    // Elevator
+    public static final int ELEVATOR_MOTOR = 7;
+
+
+    // Hatch Intake and TCV
+    public static final int HATCH_INTAKE = 5;
+    public static final int INTAKE_SOLENOID = 4;
+    public static final int TCV_SOLENOID = 3;
 }

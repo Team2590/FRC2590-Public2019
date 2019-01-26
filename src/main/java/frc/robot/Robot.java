@@ -89,6 +89,13 @@ public class Robot extends TimedRobot {
       hatchIntake.stow();
     }
 
+    if(rightJoystick.getRawButton(4)) {
+      hatchIntake.extendTCV();
+    } else {
+      hatchIntake.retractTCV();
+    }
+
+
     // updates each subsystem at the tail end of each loop
     hatchIntake.update();
     drivetrain.update();

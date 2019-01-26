@@ -8,7 +8,6 @@
 package frc.commands;
 
 import frc.auto.NemesisRunnable;
-import frc.robot.Robot;
 
 /**
  * Turns to a given angle

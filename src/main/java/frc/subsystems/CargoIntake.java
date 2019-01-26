@@ -39,7 +39,7 @@ public class CargoIntake extends Subsystem implements RobotMap {
   // constructor
   public CargoIntake() {
     // the cargo intake motor is connected to a 775, hence it is brushed
-    cargoIntakeMotor = new CANSparkMax(cargo_intake, MotorType.kBrushed);
+    cargoIntakeMotor = new CANSparkMax(CARGO_INTAKE, MotorType.kBrushed);
   }
 
   // called every loop of teleop periodic
