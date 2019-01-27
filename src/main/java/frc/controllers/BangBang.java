@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.PIDSource;
 /**
  * Bang Bang controller for basic motion control and tracking
  * Constantly oscillates a motor between two values to compensate for overshoot
+ * @author Harsh Padhye
  */
 public class BangBang implements Controller {
 

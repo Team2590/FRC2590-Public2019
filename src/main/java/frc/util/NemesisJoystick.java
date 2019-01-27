@@ -29,9 +29,9 @@ import edu.wpi.first.wpilibj.Joystick;
 
   /**
    * makes a new Joystick
-   * @param port : port the joystick is on
-   * @param xDeadBand : the deadband for the x axis
-   * @param yDeadBand : the deadband for the y axis
+   * @param port port the joystick is on
+   * @param xDeadBand the deadband for the x axis
+   * @param yDeadBand the deadband for the y axis
    */
   public NemesisJoystick(int port, double xDeadBand, double yDeadBand) {
     super(port);
@@ -49,7 +49,7 @@ import edu.wpi.first.wpilibj.Joystick;
 
   /**
    * Gets the banded value of the joysticks x axis
-   * @return : banded val of the joysticks x axis
+   * @return banded val of the joysticks x axis
    */
   public double getXBanded() {
     if(Math.abs(this.getX()) - deadBandX < 0) {
@@ -61,7 +61,7 @@ import edu.wpi.first.wpilibj.Joystick;
 
   /**
    * Gets the banded value of the joysticks y axis
-   * @return : banded val of the joysticks  y axis
+   * @return banded val of the joysticks  y axis
    */
   public double getYBanded() {
     if(Math.abs(this.getY()) - deadBandY < 0) {
@@ -72,7 +72,7 @@ import edu.wpi.first.wpilibj.Joystick;
 
   /**
    * button being released
-   * @param button : the button clicked
+   * @param button the button clicked
    * @return if it is being released
    */
   public boolean getRisingEdge(int button) {
@@ -84,8 +84,8 @@ import edu.wpi.first.wpilibj.Joystick;
 
   /**
    * button being pressed
-   * @param button : the button being pressed
-   * @return : if it is being clicked
+   * @param button the button being pressed
+   * @return if it is being clicked
    */
   public boolean getFallingEdge(int button) {
     boolean cur = this.getRawButton(button);

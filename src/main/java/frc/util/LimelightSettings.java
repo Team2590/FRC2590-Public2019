@@ -8,7 +8,7 @@
 package frc.util;
 
 /**
- * Add your docs here.
+ * Constants and Settings of the Limelight Camera
  */
 public interface LimelightSettings {
 

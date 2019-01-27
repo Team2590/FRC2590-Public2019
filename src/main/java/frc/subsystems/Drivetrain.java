@@ -45,6 +45,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   DifferentialDrive driveSystem;
 
   // motor controllers for the DT, set up in master/slave fashion
+  // motor controllers closer to the front of the robot are masters
   private CANSparkMax leftDriveMaster;
   private CANSparkMax leftDriveSlave;
   private CANSparkMax rightDriveMaster;
@@ -95,6 +96,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
       break;
 
     case TELEOP_DRIVE:
+      automaticGearShift();
       driveSystem.arcadeDrive(straightPower, turnPower);
       break;
 
@@ -130,8 +132,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   /**
    * drives the robot in teleoperated mode
    * 
-   * @param straight: Input of Left Joystick's Y Axis
-   * @param turn: Input of Right Joystick's X Axis
+   * @param straight Input of Left Joystick's Y Axis
+   * @param turn Input of Right Joystick's X Axis
    */
   public void teleopDrive(double straight, double turn) {
     straightPower = straight;
@@ -143,8 +145,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   /**
    * sets the speeds for the drive motors at the same time
    * 
-   * @param left: drive speed for the left motor controller
-   * @param right: drive speed for the right motor controller
+   * @param left drive speed for the left motor controller
+   * @param right drive speed for the right motor controller
    */
   public void setSpeeds(double leftSpeed, double rightSpeed) {
     leftDriveMaster.set(leftSpeed);
@@ -165,7 +167,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   /**
    * Forces drivetrain to desired gear
    * 
-   * @param isLowGear: true if the robot should be in low gear, false if the robot
+   * @param isLowGear true if the robot should be in low gear, false if the robot
    *        should be in high gear
    */
   public void manualGearShift(boolean isLowGear) {

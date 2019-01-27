@@ -17,7 +17,7 @@ public class DriveStraight implements NemesisRunnable {
 
     /**
      * Drives in a straight line using motion profiling
-     * @param distance : distance to travel to in inches
+     * @param distance distance to travel to in inches
      */
     public DriveStraight(double distance) {
         howFar = distance;

@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.PIDSource;
 
 /**
  * Basic Proportional, Integral, Derivative feedback control loop
+ * @author Harsh Padhye
  */
 public class PID implements Controller {
 
@@ -30,12 +31,12 @@ public class PID implements Controller {
 
     /**
      * Proportional, integral, and derivative feedback controller
-     * @param kP: Proportional gain
-     * @param kI: Integral gain
-     * @param kD: Derivative gain
-     * @param tolerance: Acceptable range from setpoint to stop the controller
-     * @param source: Sensor source (Encoder, Gyro, Potentiometer, etc)
-     * @param output: Motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
+     * @param kP Proportional gain
+     * @param kI Integral gain
+     * @param kD Derivative gain
+     * @param tolerance Acceptable range from setpoint to stop the controller
+     * @param source Sensor source (Encoder, Gyro, Potentiometer, etc)
+     * @param output Motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
      */
     public PID(double kP, double kI, double kD, double tolerance, PIDSource source, PIDOutput output) {
         this.kP = kP;
