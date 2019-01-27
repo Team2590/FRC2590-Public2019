@@ -9,29 +9,34 @@ package frc.controllers;
 
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.PIDSource;
-import edu.wpi.first.wpilibj.Timer;
 
 /**
  * Basic Proportional, Integral, Derivative feedback control loop
  */
 public class PID implements Controller {
 
-    double kP, kI, kD; // control gains (proportional, integral, derivative)
-    double setpoint;
-    double errorSum;
-    double lastError;
-    double lastTime;
-    double tolerance;
+    private double kP, kI, kD; // control gains (proportional, integral, derivative)
+    private double setpoint;
+    private double errorSum;
+    private double lastError;
+    private double tolerance;
 
-    int cycles;
+    private int cycles;
 
-    boolean done;
+    private boolean done;
 
-    PIDSource source;
-    PIDOutput output;
+    private PIDSource source;
+    private PIDOutput output;
 
-    // consider using PID Source and PIDOutput so that calculate can be written
-    // directly from this class rather than returning a function
+    /**
+     * Proportional, integral, and derivative feedback controller
+     * @param kP: Proportional gain
+     * @param kI: Integral gain
+     * @param kD: Derivative gain
+     * @param tolerance: Acceptable range from setpoint to stop the controller
+     * @param source: Sensor source (Encoder, Gyro, Potentiometer, etc)
+     * @param output: Motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
+     */
     public PID(double kP, double kI, double kD, double tolerance, PIDSource source, PIDOutput output) {
         this.kP = kP;
         this.kI = kI;
@@ -44,7 +49,6 @@ public class PID implements Controller {
 
         errorSum = 0.0;
         lastError = 0.0;
-        lastTime = 0.0;
         cycles = 0;
 
         done = true;
@@ -58,14 +62,11 @@ public class PID implements Controller {
 
     public void calculate() {
         double error = setpoint - source.pidGet(); // difference between desired value and current value
-        double time = Timer.getFPGATimestamp() * 1000; // current time
-        double dt = time - lastTime; // timestep
         double errorDelta = (error - lastError); // change in error
 
         errorSum += error * dt; // integrates error over time
 
         // sets the last values for the next iteration
-        lastTime = time;
         lastError = error;
 
         if (Math.abs(error) < tolerance) {

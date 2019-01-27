@@ -13,6 +13,11 @@ package frc.controllers;
 public interface Controller {
 
   /**
+   * constant timestep value, 20ms refresh rate
+   */
+  public static final double dt = 0.02;
+
+  /**
    * resets the desired setpoint of the controller
    * @param stp: setpoint
    */

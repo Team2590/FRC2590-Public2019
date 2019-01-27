@@ -7,10 +7,12 @@
 
 package frc.subsystems;
 
+import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.command.Subsystem;
+import frc.controllers.MotionProfile;
 import frc.robot.RobotMap;
 
 /**
@@ -35,9 +37,16 @@ public class Elevator extends Subsystem implements RobotMap {
     STOPPED, MOVING
   }
 
+  //Elevator Motor
   CANSparkMax elevatorMotor;
 
-  // constructor
+  //Elevator Encoder
+  CANEncoder elevatorEncoder;
+
+  //Motion profile controller to move elevator smoothly and accurately
+  MotionProfile elevatorController;
+
+
   public Elevator() {
     // the elevator motor is connected to a 775, hence it is brushed
     elevatorMotor = new CANSparkMax(ELEVATOR_MOTOR, MotorType.kBrushed);
@@ -57,6 +66,10 @@ public class Elevator extends Subsystem implements RobotMap {
         System.out.println("Elevator Default State");
         break;
     }
+  }
+
+  public void moveSmooth(double setpoint, double vel, double acc) {
+
   }
 
   @Override

@@ -8,7 +8,7 @@
 package frc.settings;
 
 /**
- * Add your docs here.
+ * Organizes the gains & misc values for the hatch intake
  */
 public interface HatchIntakeSettings {
     

@@ -8,7 +8,13 @@
 package frc.settings;
 
 /**
- * Add your docs here.
+ * Organizes the gains & misc values for the elevator
  */
 public interface ElevatorSettings {
+
+    //Motion Profile Constants
+    public static final double ELEVATOR_KP = 0.0;
+    public static final double ELEVATOR_KV = 0.0;
+    public static final double ELEVATOR_KA = 0.0;
+
 }
