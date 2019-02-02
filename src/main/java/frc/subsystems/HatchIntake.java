@@ -12,7 +12,6 @@ import frc.robot.RobotMap;
  */
 public class HatchIntake extends Subsystem implements RobotMap {
 
-  // new singleton
   private static HatchIntake hatchInstance = null;
 
   public static HatchIntake getHatchIntakeInstance() {
@@ -68,7 +67,6 @@ public class HatchIntake extends Subsystem implements RobotMap {
 
   public void runIntake() {
     hatchState = States.INTAKE;
-    System.out.println("In runIntake!!!");
   }
 
   public void stopIntake() {

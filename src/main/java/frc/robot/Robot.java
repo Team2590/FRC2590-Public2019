@@ -73,8 +73,7 @@ public class Robot extends TimedRobot {
     drivetrain.teleopDrive(-leftJoystick.getY() * 0.5, rightJoystick.getX() * 0.5);
 
     // Hatch Intake controls for Intaking, Spitting, and Stopping
-    if (rightJoystick.getRawButton(1)) {
-      System.out.println("In teleoPeriodic doing freaking hatch button");        
+    if (rightJoystick.getRawButton(1)) {   
    
       hatchIntake.runIntake();
     } else if (rightJoystick.getRawButton(2)) {

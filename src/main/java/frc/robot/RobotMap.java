@@ -5,13 +5,14 @@ package frc.robot;
  * Interface to organize the various ports, gains, PWM Channels, CAN IDs
  */
 public interface RobotMap {
+    
     // Drivetrain
-    public static final int LEFT_DRIVE_MASTER = 4;
-    public static final int LEFT_DRIVE_SLAVE = 1;
-    public static final int RIGHT_DIRVE_MASTER = 2;
-    public static final int RIGHT_DRIVE_SLAVE = 3;
+    public static final int LEFT_DRIVE_MASTER = 1;
+    public static final int LEFT_DRIVE_SLAVE = 2;
+    public static final int RIGHT_DIRVE_MASTER = 3;
+    public static final int RIGHT_DRIVE_SLAVE = 4;
 
-    public static final int GEAR_SHIFT_SOLENOID = 2; //SUBJECT TO CHANGE
+    public static final int GEAR_SHIFT_SOLENOID = 1;
 
 
     // Cargo intake
