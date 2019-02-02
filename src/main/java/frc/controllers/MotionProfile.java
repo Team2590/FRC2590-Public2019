@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.PIDSourceType;
 
 /**
  * Creates a velocity profile for the system to travel smoothly and accurately
+ * 
  * @author Harsh Padhye
  */
 public class MotionProfile implements Controller {
@@ -23,8 +24,8 @@ public class MotionProfile implements Controller {
     private double maxVel;
     private double maxAcc;
 
-    // While this is not a PID class, these objects allow us to read from and write
-    // to the sensor and motor, respectively
+    // These objects allow us to read from and write
+    // to the sensors and motor, respectively
     private PIDSource source;
     private PIDOutput output;
 
@@ -49,9 +50,6 @@ public class MotionProfile implements Controller {
 
     // whether the profile is read forward or backwards
     private boolean backwards;
-
-    // initial values forkinematic calculations
-    private double currentVelocity;
 
     /**
      * Motion Profile Controller Allows for smooth and accurate path following
@@ -91,30 +89,25 @@ public class MotionProfile implements Controller {
         accelerationDistance = 0.0;
 
         backwards = false;
-
-        currentVelocity = 0.0;
     }
 
     public void setSetpoint(double setpoint) {
 
-        double current = source.pidGet();
-        done = false;
+        double currentPos = getSourceDistance();
 
         // sets the start and end points of the profile
-        startPoint = source.pidGet();
+        startPoint = currentPos;
         endPoint = setpoint;
-
-        currentVelocity = 0.0;
 
         // resets the output array for each new profile
         desiredOutputs = new double[3];
-        desiredOutputs[0] = current; // desired position
+        desiredOutputs[0] = currentPos; // desired position
         desiredOutputs[1] = 0.0; // desired velocity
         desiredOutputs[2] = 0.0; // desired acceleration
 
         // calculates path direction and distance
-        backwards = (current > setpoint);
-        travelDistance = Math.abs(setpoint - current);
+        backwards = (currentPos > setpoint);
+        travelDistance = Math.abs(setpoint - currentPos);
 
         // Determines the fastest velocity the system will travel
         // The capped velocity is the minimum between the desired max velocity and the
@@ -136,29 +129,31 @@ public class MotionProfile implements Controller {
     public void calculate() {
         if (!done) {
 
-            double current = source.pidGet();
+            // gets the sensor's current values for distance and rate
+            // used in calculation for intial position and velocity
+            double currentPos = getSourceDistance();
+            double currentVel = getSourceRate();
+
+            // resets source type to dispalcement
+            source.setPIDSourceType(PIDSourceType.kDisplacement);
 
             // distances from start and end points
-            double distanceFromStart = Math.abs(startPoint - current);
-            double distanceFromEnd = Math.abs(endPoint - current);
+            double distanceFromStart = Math.abs(startPoint - currentPos);
+            double distanceFromEnd = Math.abs(endPoint - currentPos);
 
             // max and min reach velocities (given the next velocity, what is the
             // fastest/slowest you'll go)
-            double maxReachVel = Math.sqrt(Math.pow(currentVelocity, 2) + 2 * maxAcc * distanceFromEnd);
-            double minReachVel = Math.sqrt(Math.pow(currentVelocity, 2) - 2 * maxAcc * distanceFromEnd);
-
-            // treat all future references of adjustedvel as an initial velocity term, Vi
-            // eg: Vf = Vi + a*t
-            double adjustedVel = currentVelocity;
+            double maxReachVel = Math.sqrt(Math.pow(currentVel, 2) + 2 * maxAcc * distanceFromEnd);
+            double minReachVel = Math.sqrt(Math.pow(currentVel, 2) - 2 * maxAcc * distanceFromEnd);
 
             // makes sure the velocity is non-negative
             if (!backwards) { // path read forwards
-                if (minReachVel < 0 || currentVelocity < 0) {
-                    adjustedVel = Math.min(cappedMaxVel, maxReachVel);
+                if (minReachVel < 0 || currentVel < 0) {
+                    currentVel = Math.min(cappedMaxVel, maxReachVel);
                 }
             } else { // path read in reverse
                 if (minReachVel < 0) {
-                    adjustedVel = Math.min(cappedMaxVel, maxReachVel);
+                    currentVel = Math.min(cappedMaxVel, maxReachVel);
                 }
             }
 
@@ -171,11 +166,11 @@ public class MotionProfile implements Controller {
 
             // calculates acceleration/deceleration phases of profile
             if (distanceFromStart <= accelerationDistance) { // accel
-                setDesiredOutputArray(adjustedVel * dt + 0.5 * maxAcc * (dt * dt), adjustedVel + maxAcc * dt, maxAcc);
+                setDesiredOutputArray(currentVel * dt + 0.5 * maxAcc * (dt * dt), currentVel + maxAcc * dt, maxAcc);
 
             } else if (distanceFromStart > (accelerationDistance + cruisingDistance)) { // decel
                 // kinematics subtract the acceleration term because it is negative
-                setDesiredOutputArray(adjustedVel * dt - 0.5 * maxAcc * (dt * dt), adjustedVel - maxAcc * dt, -maxAcc);
+                setDesiredOutputArray(currentVel * dt - 0.5 * maxAcc * (dt * dt), currentVel - maxAcc * dt, -maxAcc);
 
             }
 
@@ -183,7 +178,7 @@ public class MotionProfile implements Controller {
             if (isTrapezoidal && (distanceFromStart > accelerationDistance)
                     && (distanceFromEnd > accelerationDistance)) {
                 // drive at a constant speed (acceleration = 0)
-                setDesiredOutputArray(adjustedVel * dt, adjustedVel, 0);
+                setDesiredOutputArray(currentVel * dt, currentVel, 0);
             }
 
             output.pidWrite(desiredOutputs[0] * kP + desiredOutputs[1] * kV + desiredOutputs[2] * kA);
@@ -196,25 +191,32 @@ public class MotionProfile implements Controller {
 
     /**
      * Sets the output array, a holster for the desired pos, vel, and acc for the
-     * next iteration of the profile. 
+     * next iteration of the profile.
      * 
-     * @param position change in position based on profile
-     * @param velocity next velocity in profile
+     * @param position     change in position based on profile
+     * @param velocity     next velocity in profile
      * @param acceleration next acceleration in profile
      */
     private void setDesiredOutputArray(double position, double velocity, double acceleration) {
         // multiplies all output vars by -1 if reading the traj backwards
         int direction = (backwards ? -1 : 1);
 
-        desiredOutputs[0] += position * direction; // add position bc kinematics calculate delta displacement
+        desiredOutputs[0] = position * direction; // kinematics calculate delta displacement, automatic error calc
         desiredOutputs[1] = velocity * direction;
         desiredOutputs[2] = acceleration * direction;
-
-        // restates the initial velocity for future iterations
-        currentVelocity = velocity;
     }
 
     public boolean isDone() {
         return true;
+    }
+
+    public double getSourceDistance() {
+        source.setPIDSourceType(PIDSourceType.kDisplacement);
+        return source.pidGet();
+    }
+
+    public double getSourceRate() {
+        source.setPIDSourceType(PIDSourceType.kRate);
+        return source.pidGet();
     }
 }

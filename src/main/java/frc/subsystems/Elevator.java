@@ -11,6 +11,7 @@ import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.controllers.MotionProfile;
 import frc.robot.RobotMap;
@@ -43,6 +44,8 @@ public class Elevator extends Subsystem implements RobotMap {
   //Elevator Encoder
   CANEncoder elevatorEncoder;
 
+  Encoder temp;
+
   //Motion profile controller to move elevator smoothly and accurately
   MotionProfile elevatorController;
 
@@ -50,6 +53,7 @@ public class Elevator extends Subsystem implements RobotMap {
   public Elevator() {
     // the elevator motor is connected to a 775, hence it is brushed
     elevatorMotor = new CANSparkMax(ELEVATOR_MOTOR, MotorType.kBrushed);
+    elevatorEncoder = new CANEncoder(elevatorMotor);
   }
 
   // called every loop of teleop periodic

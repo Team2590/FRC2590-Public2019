@@ -9,14 +9,16 @@ package frc.controllers;
 
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.PIDSource;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
 
 /**
  * Basic Proportional, Integral, Derivative feedback control loop
+ * 
  * @author Harsh Padhye
  */
 public class PID implements Controller {
 
-    private double kP, kI, kD; // control gains (proportional, integral, derivative)
+    private double kP, kI, kD, kH, kR; // control gains (proportional, integral, derivative, heading, turn rate)
     private double setpoint;
     private double errorSum;
     private double lastError;
@@ -28,31 +30,54 @@ public class PID implements Controller {
 
     private PIDSource source;
     private PIDOutput output;
+    private Gyro gyro;
 
     /**
      * Proportional, integral, and derivative feedback controller
-     * @param kP Proportional gain
-     * @param kI Integral gain
-     * @param kD Derivative gain
+     * 
+     * @param kP        Proportional gain
+     * @param kI        Integral gain
+     * @param kD        Derivative gain
+     * @param kH        Heading gain
+     * @param kR        Angular rate gain
      * @param tolerance Acceptable range from setpoint to stop the controller
-     * @param source Sensor source (Encoder, Gyro, Potentiometer, etc)
-     * @param output Motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
+     * @param source    Sensor source (Encoder, Gyro, Potentiometer, etc)
+     * @param output    Motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
+     * @param gyro      Gyro sensor for current angle and angular rate
      */
-    public PID(double kP, double kI, double kD, double tolerance, PIDSource source, PIDOutput output) {
+    public PID(double kP, double kI, double kD, double kH, double kR, double tolerance, PIDSource source,
+            PIDOutput output, Gyro gyro) {
         this.kP = kP;
         this.kI = kI;
         this.kD = kD;
+        this.kH = kH;
+        this.kR = kR;
 
         this.tolerance = tolerance;
 
         this.source = source;
         this.output = output;
+        this.gyro = gyro;
 
         errorSum = 0.0;
         lastError = 0.0;
         cycles = 0;
 
         done = true;
+    }
+
+    /**
+     * PID Controller WITHOUT Gyro input
+     * 
+     * @param kP        Proportional gain
+     * @param kI        Integral gain
+     * @param kD        Derivative gain
+     * @param tolerance Acceptable range from setpoint to stop the controller
+     * @param source    Sensor source (Encoder, Gyro, Potentiometer, etc)
+     * @param output    Motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
+     */
+    public PID(double kP, double kI, double kD, double tolerance, PIDSource source, PIDOutput output) {
+        this(kP, kI, kD, 0.0, 0.0, tolerance, source, output, null);
     }
 
     public void setSetpoint(double setpoint) {
@@ -83,6 +108,13 @@ public class PID implements Controller {
         }
 
         output.pidWrite((kP * error) + (kI * errorSum) + (kD * errorDelta));
+    }
+
+    private double headingCompensation() {
+        if (gyro == null) {
+            return 0.0;
+        }
+
     }
 
     public boolean isDone() {
