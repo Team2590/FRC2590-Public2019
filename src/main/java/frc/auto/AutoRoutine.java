@@ -59,11 +59,11 @@ public abstract class AutoRoutine {
    */
   public void endAuto( ) {
     running = false;
-    /*
-    Robot.getIntake().stop();
-    Robot.getDrivetrainInstance().setStop();
-    Robot.getElevator().stopElevator();
-    */
+    
+    //Robot.getHatchIntakeInstance().
+    Robot.getDrivetrainInstance().stopDrivetrain();
+    Robot.getElevatorInstance().stopElevator();
+    
   }
 
 

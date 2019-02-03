@@ -10,12 +10,15 @@ package frc.subsystems;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import frc.controllers.PID;
 import frc.robot.RobotMap;
 import frc.settings.DrivetrainSettings;
 import frc.util.NemesisCANEncoder;
+import frc.util.NemesisMultiMC;
 
 /**
  * Drivetrain Class for the 2019 Robot Features:
@@ -38,11 +41,11 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   private States driveState = States.STOPPED;
 
   private enum States {
-    STOPPED, TELEOP_DRIVE, AUTON_DRIVE, PATH_FOLLOWING, TURN, DRIVE_STRAIGHT, VELOCITY
+    STOPPED, TELEOP_DRIVE, AUTON_DRIVE, PATH_FOLLOWING, TURN, DRIVE_STRAIGHT
   }
 
   // allows us to drive the robot via arcade drive
-  DifferentialDrive driveSystem;
+  private DifferentialDrive driveSystem;
 
   // motor controllers for the DT, set up in master/slave fashion
   // motor controllers closer to the front of the robot are masters
@@ -51,19 +54,28 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   private CANSparkMax rightDriveMaster;
   private CANSparkMax rightDriveSlave;
 
+  // holds the left and right motor controllers as one speed controllers
+  private NemesisMultiMC dualMotorControllers;
+
   // encoders for the DT, preinstalled in NEO motors
   private NemesisCANEncoder leftDriveEncoder;
   private NemesisCANEncoder rightDriveEncoder;
 
-  // gear shifting piston
+  // gear shifting piston (low true, high false)
   private Solenoid shiftingPiston;
+
+  // Gyro sensor for reading the robots heading
+  private ADXRS450_Gyro gyro;
+
+  // PID controller for turning in place
+  private PID turnController;
 
   // these variables are substitutes for teleop joystick commands
   // straight: Left Joystick Y axis; turn: Right Joystick X Axis
-  double straightPower, turnPower;
+  private double straightPower, turnPower;
 
   public Drivetrain() {
-    // Motor controllers, currently testing SPARK MCs
+
     leftDriveMaster = new CANSparkMax(LEFT_DRIVE_MASTER, MotorType.kBrushless);
     leftDriveSlave = new CANSparkMax(LEFT_DRIVE_SLAVE, MotorType.kBrushless);
     rightDriveMaster = new CANSparkMax(RIGHT_DIRVE_MASTER, MotorType.kBrushless);
@@ -78,11 +90,13 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     rightDriveEncoder = new NemesisCANEncoder(rightDriveMaster);
 
     driveSystem = new DifferentialDrive(leftDriveMaster, rightDriveMaster);
+    dualMotorControllers = new NemesisMultiMC(leftDriveMaster, rightDriveMaster);
 
-    // for shifting between low and high gear (low true, high false)
     shiftingPiston = new Solenoid(GEAR_SHIFT_SOLENOID);
+    gyro = new ADXRS450_Gyro();
 
-    // setting numerical variables to the default values
+    turnController = new PID(TURN_KP, TURN_KI, TURN_KD, 2.0, gyro, dualMotorControllers);
+
     straightPower = 0.0;
     turnPower = 0.0;
   }
@@ -107,12 +121,13 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
       break;
 
     case TURN:
+      turnController.calculate();
+      if (turnController.isDone()) {
+        driveState = States.STOPPED;
+      }
       break;
 
     case DRIVE_STRAIGHT:
-      break;
-
-    case VELOCITY:
       break;
 
     default:
@@ -133,7 +148,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
    * drives the robot in teleoperated mode
    * 
    * @param straight Input of Left Joystick's Y Axis
-   * @param turn Input of Right Joystick's X Axis
+   * @param turn     Input of Right Joystick's X Axis
    */
   public void teleopDrive(double straight, double turn) {
     straightPower = straight;
@@ -142,10 +157,15 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     driveState = States.TELEOP_DRIVE;
   }
 
+  public void turn(double setpoint) {
+    turnController.setSetpoint(setpoint);
+    driveState = States.TURN;
+  }
+
   /**
    * sets the speeds for the drive motors at the same time
    * 
-   * @param left drive speed for the left motor controller
+   * @param left  drive speed for the left motor controller
    * @param right drive speed for the right motor controller
    */
   public void setSpeeds(double leftSpeed, double rightSpeed) {
@@ -168,7 +188,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
    * Forces drivetrain to desired gear
    * 
    * @param isLowGear true if the robot should be in low gear, false if the robot
-   *        should be in high gear
+   *                  should be in high gear
    */
   public void manualGearShift(boolean isLowGear) {
     shiftingPiston.set(isLowGear);

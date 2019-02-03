@@ -8,6 +8,7 @@
 package frc.commands;
 
 import frc.auto.NemesisRunnable;
+import frc.robot.Robot;
 
 /**
  * Turns to a given angle
@@ -27,7 +28,8 @@ public class Turn implements NemesisRunnable{
   @Override
   public void run() {
     if(!hasStarted) {
-      
+      Robot.getDrivetrainInstance();
+      hasStarted = true;
     }
   }
 

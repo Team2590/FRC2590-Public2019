@@ -1,7 +1,7 @@
 package frc.subsystems;
 
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
@@ -30,42 +30,34 @@ public class HatchIntake extends Subsystem implements RobotMap, HatchIntakeSetti
   }
 
   private Solenoid intakePiston;
-  private Solenoid bcvPiston;
-  private CANSparkMax hatchIntakeMotor;
+  private VictorSPX hatchIntakeMotor;
 
   // constructor
   public HatchIntake() {
     intakePiston = new Solenoid(INTAKE_SOLENOID);
-    bcvPiston = new Solenoid(BCV_SOLENOID);
-    // the hatch intake motor is connected to a 775, hence it is brushed
-    hatchIntakeMotor = new CANSparkMax(HATCH_INTAKE, MotorType.kBrushed);
+    hatchIntakeMotor = new VictorSPX(HATCH_INTAKE);
   }
 
   // called every loop of teleop periodic
   public void update() {
     switch (hatchState) {
     case STOPPED:
-      hatchIntakeMotor.set(0.0);
-      System.out.println("Hatch intake stopped");
+      hatchIntakeMotor.set(ControlMode.PercentOutput, 0.0);
       break;
 
     case INTAKE:
-      hatchIntakeMotor.set(0.5);
-      System.out.println("Hatch being intaked|intaken|grabbed");
+      hatchIntakeMotor.set(ControlMode.PercentOutput, 0.5);
       break;
 
     case OUTTAKE:
-      hatchIntakeMotor.set(-0.35);
-      System.out.println("Hatch being outaked");
+      hatchIntakeMotor.set(ControlMode.PercentOutput, -0.35);
       break;
 
     default:
-      hatchIntakeMotor.set(0.0);
-      System.out.println("Hatch Intake Default State");
+      hatchIntakeMotor.set(ControlMode.PercentOutput, 0.0);
       break;
     }
   }
-
 
   public void stopIntake() {
     hatchState = States.STOPPED;
@@ -78,21 +70,13 @@ public class HatchIntake extends Subsystem implements RobotMap, HatchIntakeSetti
   public void reverseIntake() {
     hatchState = States.OUTTAKE;
   }
- 
+
   public void stow() {
     intakePiston.set(false);
   }
 
   public void drop() {
     intakePiston.set(true);
-  }
-
-  public void extendBCV() {
-    bcvPiston.set(true);
-  }
-
-  public void retractBCV() {
-    bcvPiston.set(false);
   }
 
   @Override

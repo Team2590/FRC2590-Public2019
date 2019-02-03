@@ -6,23 +6,31 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
+import frc.settings.FieldSettings;
 import frc.subsystems.CargoIntake;
+import frc.subsystems.Carriage;
 import frc.subsystems.Drivetrain;
 import frc.subsystems.Elevator;
 import frc.subsystems.HatchIntake;
 import frc.util.NemesisJoystick;
 
+public class Robot extends TimedRobot implements FieldSettings {
 
-public class Robot extends TimedRobot {
-
+  // joysticks
   private NemesisJoystick leftJoystick;
   private NemesisJoystick rightJoystick;
+  private NemesisJoystick operatorJoystick;
 
   // susbsystems
   private static Drivetrain drivetrain;
   private static HatchIntake hatchIntake;
   private static CargoIntake cargoIntake;
+  private static Carriage carriage;
   private static Elevator elevator;
+
+  // controls if the elevator setpoints correlate to hatch heights or ball heights
+  // true if hatch heights, false if cargo heights
+  private boolean hatchButtonMode;
 
   /**
    * Initialization of robot, when robot is turned on
@@ -31,11 +39,15 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     leftJoystick = new NemesisJoystick(0);
     rightJoystick = new NemesisJoystick(1);
+    operatorJoystick = new NemesisJoystick(2);
 
     drivetrain = Drivetrain.getDrivetrainInstance();
     hatchIntake = HatchIntake.getHatchIntakeInstance();
     cargoIntake = CargoIntake.getCargoIntakeInstance();
+    carriage = Carriage.getCarriageInstance();
     elevator = Elevator.getElevatorInstance();
+
+    hatchButtonMode = true;
   }
 
   @Override
@@ -68,13 +80,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    
+
     // inverts Y axis; pushing the joystick forward drives forward
     drivetrain.teleopDrive(-leftJoystick.getY() * 0.5, rightJoystick.getX() * 0.5);
 
     // Hatch Intake controls for Intaking, Spitting, and Stopping
-    if (rightJoystick.getRawButton(1)) {   
-   
+    if (rightJoystick.getRawButton(1)) {
       hatchIntake.runIntake();
     } else if (rightJoystick.getRawButton(2)) {
       hatchIntake.reverseIntake();
@@ -82,18 +93,55 @@ public class Robot extends TimedRobot {
       hatchIntake.stopIntake();
     }
 
-    if(rightJoystick.getRawButton(3)) {
+    // lifts and drops hatch dustpan
+    if (rightJoystick.getRawButton(3)) {
       hatchIntake.drop();
     } else {
       hatchIntake.stow();
     }
 
-    if(rightJoystick.getRawButton(4)) {
-      hatchIntake.extendBCV();
-    } else {
-      hatchIntake.retractBCV();
+    // opens and closes Bicuspid valve
+    // if (rightJoystick.getRawButton(4)) {
+    // carriage.openBCV();
+    // } else {
+    // carriage.closeBCV();
+    // }
+
+    // Elevator stepoint controls
+    if (hatchButtonMode) { // hatch heights
+      if (rightJoystick.getRisingEdge(5)) {
+        elevator.moveSmooth(ROCKET_LOW_HATCH);
+
+      } else if (rightJoystick.getRisingEdge(6)) {
+        elevator.moveSmooth(ROCKET_MID_HATCH);
+
+      } else if (rightJoystick.getRisingEdge(4)) {
+        elevator.moveSmooth(ROCKET_HIGH_HATCH);
+      }
+
+    } else { // cargo ball heights
+      if (rightJoystick.getRisingEdge(5)) {
+        elevator.moveSmooth(ROCKET_LOW_CARGO);
+
+      } else if (rightJoystick.getRisingEdge(6)) {
+        elevator.moveSmooth(ROCKET_MID_CARGO);
+
+      } else if (rightJoystick.getRisingEdge(4)) {
+        elevator.moveSmooth(ROCKET_HIGH_CARGO);
+      }
+
+    }
+    // drops the elevator to ground level, regardless of setpoint mode
+    if (rightJoystick.getRisingEdge(3)) {
+      elevator.moveSmooth(0.0);
     }
 
+    // switches between hatch and ball elevator setpoints
+    if (leftJoystick.getRisingEdge(4)) {
+      hatchButtonMode = true; // hatch panel
+    } else if (leftJoystick.getRisingEdge(5)) {
+      hatchButtonMode = false; // cargo ball
+    }
 
     // updates each subsystem at the tail end of each loop
     hatchIntake.update();
@@ -118,6 +166,10 @@ public class Robot extends TimedRobot {
 
   public static CargoIntake getCargoIntakeInstance() {
     return cargoIntake;
+  }
+
+  public static Carriage getCarriageInstance() {
+    return carriage;
   }
 
   public static Elevator getElevatorInstance() {

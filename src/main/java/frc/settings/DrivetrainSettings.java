@@ -17,4 +17,9 @@ public interface DrivetrainSettings {
     public static final double DRIVETRAIN_KI = 0.0;
     public static final double DRIVETRAIN_KV = 0.0;
     public static final double DRIVETRAIN_KA = 0.0;
+
+    //gains for turning in place
+    public static final double TURN_KP = 0.0;
+    public static final double TURN_KI = 0.0;
+    public static final double TURN_KD = 0.0;
 }

@@ -53,7 +53,7 @@ public class MotionProfile implements Controller {
     // error sum for an integral feedback
     private double errorSum;
 
-    //total estimated time to follow the profile
+    // total estimated time to follow the profile
     private double totalTime;
 
     // whether the profile is read forward or backwards
@@ -117,7 +117,7 @@ public class MotionProfile implements Controller {
         // Essentially, the max vel is capped by the system's capabilities
         capMaxVel = Math.min(maxVel, Math.sqrt(maxAcc * travelDistance));
 
-        //calculates the time required to follow the profile
+        // calculates the time required to follow the profile
         totalTime = (travelDistance / capMaxVel) + (capMaxVel / maxAcc);
 
         // calcualtes the accel and cruise distances
@@ -160,7 +160,6 @@ public class MotionProfile implements Controller {
                 output_velocity = capMaxVel - maxAcc * (count - i2) * dt;
                 output_position = (travelDistance - accelDistance)
                         + 0.5 * (capMaxVel * capMaxVel - output_velocity * output_velocity) / maxAcc;
-                // the above code is essentially df = di + vt + 0.5at^2
             }
 
             double error = output_position - currentPos;
@@ -185,6 +184,7 @@ public class MotionProfile implements Controller {
 
     /**
      * Sets the source to displacement mode and returns the current position
+     * 
      * @return The sensor's current position
      */
     public double getSourceDistance() {
@@ -194,6 +194,7 @@ public class MotionProfile implements Controller {
 
     /**
      * Sets the source to rate mode and returns the current rate
+     * 
      * @return The sensor's current rate (d/dt of position)
      */
     public double getSourceRate() {

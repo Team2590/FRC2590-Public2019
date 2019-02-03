@@ -7,8 +7,8 @@
 
 package frc.subsystems;
 
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.robot.RobotMap;
@@ -35,37 +35,36 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
     STOPPED, INTAKE, OUTTAKE
   }
 
-  private CANSparkMax cargoIntakeMotor;
+  private VictorSPX cargoIntakeMotor;
 
   // constructor
   public CargoIntake() {
     // the cargo intake motor is connected to a 775, hence it is brushed
-    cargoIntakeMotor = new CANSparkMax(CARGO_INTAKE, MotorType.kBrushed);
+    cargoIntakeMotor = new VictorSPX(CARGO_INTAKE);
   }
 
   // called every loop of teleop periodic
   public void update() {
     switch (cargoState) {
     case STOPPED:
-      cargoIntakeMotor.set(0.0);
+      cargoIntakeMotor.set(ControlMode.PercentOutput, 0.0);
       break;
 
     case INTAKE:
-      cargoIntakeMotor.set(1.0);
+      cargoIntakeMotor.set(ControlMode.PercentOutput, 1.0);
       break;
 
     case OUTTAKE:
-      cargoIntakeMotor.set(-1.0);
+      cargoIntakeMotor.set(ControlMode.PercentOutput, -1.0);
       break;
 
     default:
-      cargoIntakeMotor.set(0.0);
+      cargoIntakeMotor.set(ControlMode.PercentOutput, 0.0);
       System.out.println("Cargo Intake Default State");
       break;
     }
   }
 
-  
   public void runIntake() {
     cargoState = States.INTAKE;
   }

@@ -70,7 +70,7 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
       double error = setpoint - getHeight();
       elevatorMotor.set(error * ELEVATOR_HOLD_CONSTANT);
-      
+
       break;
 
     case MOVING:
@@ -98,6 +98,10 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
   public double getHeight() {
     return elevatorEncoder.getPosition();
+  }
+
+  public void stopElevator() {
+    elevatorState = States.STOPPED;
   }
 
   @Override
