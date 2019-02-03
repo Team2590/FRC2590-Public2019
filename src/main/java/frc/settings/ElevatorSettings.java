@@ -18,4 +18,10 @@ public interface ElevatorSettings {
     public static final double ELEVATOR_KV = 0.0;
     public static final double ELEVATOR_KA = 0.0;
 
+    public static final double ELEVATOR_MAX_VEL = 0.0;
+    public static final double ELEVATOR_MAX_ACC = 0.0;
+    public static final double ELEVATOR_TOLERANCE = 0.0;
+
+    public static final double ELEVATOR_HOLD_CONSTANT = 0.0;
+
 }

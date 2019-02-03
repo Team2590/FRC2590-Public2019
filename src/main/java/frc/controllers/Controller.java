@@ -19,7 +19,7 @@ public interface Controller {
 
   /**
    * resets the desired setpoint of the controller
-   * @param stp setpoint
+   * @param setpoint setpoint
    */
   public void setSetpoint(double setpoint);
 

@@ -10,15 +10,15 @@ package frc.subsystems;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.command.Subsystem;
-import frc.controllers.OldMotionProfile;
+import frc.controllers.MotionProfile;
 import frc.robot.RobotMap;
 import frc.settings.ElevatorSettings;
 import frc.util.NemesisCANEncoder;
 
 /**
  * Moves the Cargo and Hatch Panels to set heights to score points
+ * 
  * @author Harsh Padhye, Chinmay Savanur
  */
 public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
@@ -33,49 +33,71 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     return elevatorInstance;
   }
 
-  //enum to control the state of the elevator
+  // enum to control the state of the elevator
   private States elevatorState = States.STOPPED;
+
   private enum States {
     STOPPED, MOVING
   }
 
-  //Elevator Motor
-  CANSparkMax elevatorMotor;
+  // Elevator Motor
+  private CANSparkMax elevatorMotor;
 
-  //Elevator Encoder
-  NemesisCANEncoder elevatorEncoder;
-  
-  Encoder temp;
-  //Motion profile controller to move elevator smoothly and accurately
-  OldMotionProfile elevatorController;
+  // Elevator Encoder
+  private NemesisCANEncoder elevatorEncoder;
 
+  // Motion profile controller to move elevator smoothly and accurately
+  private MotionProfile elevatorController;
+
+  // setpoint to hold carriage in place after moving
+  private double setpoint;
 
   public Elevator() {
     // the elevator motor is connected to a 775, hence it is brushed
     elevatorMotor = new CANSparkMax(ELEVATOR_MOTOR, MotorType.kBrushed);
     elevatorEncoder = new NemesisCANEncoder(elevatorMotor);
 
-    elevatorController = new OldMotionProfile(ELEVATOR_KP, ELEVATOR_KV, ELEVATOR_KA, 0.0, 0.0, elevatorEncoder, elevatorMotor);
+    elevatorController = new MotionProfile(ELEVATOR_KP, ELEVATOR_KI, ELEVATOR_KV, ELEVATOR_KA, ELEVATOR_MAX_VEL,
+        ELEVATOR_MAX_ACC, ELEVATOR_TOLERANCE, elevatorEncoder, elevatorMotor);
+
+    setpoint = 0.0;
   }
 
   // called every loop of teleop periodic
   public void update() {
-    switch(elevatorState){
-      case STOPPED:
-        elevatorMotor.set(0.0);
-        break;
+    switch (elevatorState) {
+    case STOPPED:
 
-      case MOVING:
-        break;
+      double error = setpoint - getHeight();
+      elevatorMotor.set(error * ELEVATOR_HOLD_CONSTANT);
+      
+      break;
 
-      default:
-        System.out.println("Elevator Default State");
-        break;
+    case MOVING:
+
+      // calculates motor output and writes to the motor
+      elevatorController.calculate();
+
+      if (elevatorController.isDone()) {
+        elevatorState = States.STOPPED;
+      }
+
+      break;
+
+    default:
+      System.out.println("Elevator Default State");
+      break;
     }
   }
 
-  public void moveSmooth(double setpoint, double vel, double acc) {
+  public void moveSmooth(double setpoint) {
+    elevatorController.setSetpoint(setpoint);
+    this.setpoint = setpoint;
+    elevatorState = States.MOVING;
+  }
 
+  public double getHeight() {
+    return elevatorEncoder.getPosition();
   }
 
   @Override

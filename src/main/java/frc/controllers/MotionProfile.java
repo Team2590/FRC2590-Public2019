@@ -36,15 +36,14 @@ public class MotionProfile implements Controller {
     // termination of the controller
     private boolean done;
 
-    // checks whether velocity profile is trapezoidal or triangular
-    private boolean isTrapezoidal;
-
     // cruising section of profile
     private double travelDistance;
-    private double cappedMaxVel;
+    private double capMaxVel;
 
     // acceleration distance (ends of the profile)
-    private double accelerationDistance;
+    // cruise distance (middle of profile)
+    private double accelDistance;
+    private double cruiseDistance;
 
     // iteration count and breakpoints for acceleration changes in profile
     private int count;
@@ -54,22 +53,27 @@ public class MotionProfile implements Controller {
     // error sum for an integral feedback
     private double errorSum;
 
+    //total estimated time to follow the profile
+    private double totalTime;
+
     // whether the profile is read forward or backwards
     private boolean backwards;
 
     /**
      * Motion Profile Controller Allows for smooth and accurate path following
      * 
-     * @param kP: proportional feedback
-     * @param kV: velocity feedforward
-     * @param kA: acceleration feedforward
-     * @param maxVel: desired max velocity
-     * @param maxAcc: desired max acceleration
-     * @param source: sensor source (Encoder, Gyro, Potentiometer, etc)
-     * @param output: motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
+     * @param kP        proportional feedback
+     * @param kI        integral feedback
+     * @param kV        velocity feedforward
+     * @param kA        acceleration feedforward
+     * @param maxVel    desired max velocity
+     * @param maxAcc    desired max acceleration
+     * @param tolerance acceptable range to stop controller
+     * @param source    sensor source (Encoder, Gyro, Potentiometer, etc)
+     * @param output    motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
      */
-    public MotionProfile(double kP, double kI, double kV, double kA, double maxVel, double maxAcc, double tolerance, PIDSource source,
-            PIDOutput output) {
+    public MotionProfile(double kP, double kI, double kV, double kA, double maxVel, double maxAcc, double tolerance,
+            PIDSource source, PIDOutput output) {
         this.kP = kP;
         this.kI = kI;
         this.kV = kV;
@@ -84,18 +88,19 @@ public class MotionProfile implements Controller {
 
         done = true;
 
-        isTrapezoidal = false;
-
         travelDistance = 0.0;
-        cappedMaxVel = maxVel;
+        capMaxVel = maxVel;
 
-        accelerationDistance = 0.0;
+        accelDistance = 0.0;
+        cruiseDistance = 0.0;
 
         count = 0;
         i1 = 0;
         i2 = 0;
 
         errorSum = 0.0;
+
+        totalTime = 0.0;
 
         backwards = false;
     }
@@ -109,28 +114,26 @@ public class MotionProfile implements Controller {
         travelDistance = Math.abs(setpoint - currentPos);
 
         // Determines the fastest velocity the system will travel
-        // The capped velocity is the minimum between the desired max velocity and the
-        // fastest velocity achievable by half the distance profile
         // Essentially, the max vel is capped by the system's capabilities
-        cappedMaxVel = Math.min(maxVel, Math.sqrt(maxAcc * travelDistance));
-        accelerationDistance = Math.pow(cappedMaxVel, 2) / (2 * maxAcc); // d = v^2 / 2a
+        capMaxVel = Math.min(maxVel, Math.sqrt(maxAcc * travelDistance));
 
-        // sets the first iteration step, aka when the profile switches from accel to
-        // cruising
-        i1 = (int) (cappedMaxVel / (maxAcc * dt));
+        //calculates the time required to follow the profile
+        totalTime = (travelDistance / capMaxVel) + (capMaxVel / maxAcc);
 
-        // creates a trapezoidal path if the robot isn't accelerating for the entire
-        isTrapezoidal = (accelerationDistance < (travelDistance / 2));
-        if (isTrapezoidal) {
-            i2 = (int) (i1 + (travelDistance - 2 * accelerationDistance) / (cappedMaxVel * dt));
-        } else {
-            // the velocity profile is triangular, there is no period of constant velocity
-            accelerationDistance = 0.5 * travelDistance;
-            i2 = i1;
+        // calcualtes the accel and cruise distances
+        accelDistance = (capMaxVel * capMaxVel) / (2 * maxAcc); // d = v^2 / 2a
+        cruiseDistance = travelDistance - 2 * accelDistance;
+        if (cruiseDistance < 0) {
+            cruiseDistance = 0; // cruise dist should never be 0
         }
 
-        count = 0;
-        errorSum = 0.0;
+        // sets the indices, aka when the profile switches from accel to cruise and
+        // cruise to decel, respectively
+        i1 = (int) (capMaxVel / (maxAcc * dt));
+        i2 = (int) (travelDistance / (capMaxVel * dt));
+
+        count = 0; // reset loop counter
+        errorSum = 0.0; // reset integrator
     }
 
     public void calculate() {
@@ -149,28 +152,29 @@ public class MotionProfile implements Controller {
 
             } else if (count >= i1 && count < i2) { // cruising
                 output_acceleration = 0;
-                output_velocity = cappedMaxVel;
-                output_position = cappedMaxVel * (count - i1) * dt;
+                output_velocity = capMaxVel;
+                output_position = accelDistance + capMaxVel * (count - i1) * dt;
 
             } else if (count > i2) { // decelerating
                 output_acceleration = -maxAcc;
-                output_velocity = cappedMaxVel - maxAcc * (count - i2) * dt;
-                output_position = (travelDistance - accelerationDistance) + output_velocity * (count - i2) * dt
-                        + 0.5 * output_acceleration * Math.pow((count - i2), 2) * Math.pow(dt, 2);
+                output_velocity = capMaxVel - maxAcc * (count - i2) * dt;
+                output_position = (travelDistance - accelDistance)
+                        + 0.5 * (capMaxVel * capMaxVel - output_velocity * output_velocity) / maxAcc;
                 // the above code is essentially df = di + vt + 0.5at^2
             }
 
             double error = output_position - currentPos;
-
-            //profile is finished, output 0.0 to motors and exit
-            if(Math.abs(error) < tolerance) {
-                done = true;
-                output.pidWrite(0.0);
-            }
             errorSum += error * dt;
+            double command = kV * output_velocity + kA * output_acceleration + kP * error + kI * errorSum;
 
-            //kV and kA are feedforward, kP and kI are feedback 
-            output.pidWrite(kV * output_velocity + kA * output_acceleration + kP * error + kI * errorSum);
+            // profile is finished, output 0.0 to motors and exit
+            if (Math.abs(error) < tolerance) {
+                done = true;
+                command = 0.0;
+            }
+
+            // kV and kA are feedforward, kP and kI are feedback
+            output.pidWrite(command);
         }
         output.pidWrite(0.0);
     }
@@ -179,13 +183,28 @@ public class MotionProfile implements Controller {
         return true;
     }
 
+    /**
+     * Sets the source to displacement mode and returns the current position
+     * @return The sensor's current position
+     */
     public double getSourceDistance() {
         source.setPIDSourceType(PIDSourceType.kDisplacement);
         return source.pidGet();
     }
 
+    /**
+     * Sets the source to rate mode and returns the current rate
+     * @return The sensor's current rate (d/dt of position)
+     */
     public double getSourceRate() {
         source.setPIDSourceType(PIDSourceType.kRate);
         return source.pidGet();
+    }
+
+    /**
+     * @return The estimated time to follow the profile
+     */
+    public double getProfileTime() {
+        return totalTime;
     }
 }

@@ -54,13 +54,13 @@ public class OldMotionProfile implements Controller {
     /**
      * Motion Profile Controller Allows for smooth and accurate path following
      * 
-     * @param kP: proportional feedback
-     * @param kV: velocity feedforward
-     * @param kA: acceleration feedforward
-     * @param maxVel: desired max velocity
-     * @param maxAcc: desired max acceleration
-     * @param source: sensor source (Encoder, Gyro, Potentiometer, etc)
-     * @param output: motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
+     * @param kP proportional feedback
+     * @param kV velocity feedforward
+     * @param kA acceleration feedforward
+     * @param maxVel desired max velocity
+     * @param maxAcc desired max acceleration
+     * @param source sensor source (Encoder, Gyro, Potentiometer, etc)
+     * @param output motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
      */
     public OldMotionProfile(double kP, double kV, double kA, double maxVel, double maxAcc, PIDSource source,
             PIDOutput output) {
