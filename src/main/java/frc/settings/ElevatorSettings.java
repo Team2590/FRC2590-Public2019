@@ -14,6 +14,7 @@ public interface ElevatorSettings {
 
     //Motion Profile Constants
     public static final double ELEVATOR_KP = 0.0;
+    public static final double ELEVATOR_KI = 0.0;
     public static final double ELEVATOR_KV = 0.0;
     public static final double ELEVATOR_KA = 0.0;
 

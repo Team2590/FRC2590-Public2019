@@ -19,7 +19,9 @@ import edu.wpi.first.wpilibj.interfaces.Gyro;
 public class PID implements Controller {
 
     private double kP, kI, kD, kH, kR; // control gains (proportional, integral, derivative, heading, turn rate)
-    private double setpoint;
+    private double setpoint_pos;
+    private double setpoint_angle;
+    private double setpoint_angleRate;
     private double errorSum;
     private double lastError;
     private double tolerance;
@@ -80,14 +82,33 @@ public class PID implements Controller {
         this(kP, kI, kD, 0.0, 0.0, tolerance, source, output, null);
     }
 
-    public void setSetpoint(double setpoint) {
+    /**
+     * Sets the desired position, angle, and turn rate of the controller
+     * 
+     * @param setpoint_pos       desired position
+     * @param setpoint_angle     desired angle
+     * @param setpoint_angleRate desired turn rate
+     */
+    public void setSetpoint(double setpoint_pos, double setpoint_angle, double setpoint_angleRate) {
         done = false;
         errorSum = 0.0;
-        this.setpoint = setpoint;
+        this.setpoint_pos = setpoint_pos;
+        this.setpoint_angle = setpoint_angle;
+        this.setpoint_angleRate = setpoint_angleRate;
+    }
+
+    /**
+     * Sets the desired position of the controller For use without simultaneous gyro
+     * integration
+     * 
+     * @param setpoint_pos desired position
+     */
+    public void setSetpoint(double setpoint_pos) {
+        this.setSetpoint(setpoint_pos, 0.0, 0.0);
     }
 
     public void calculate() {
-        double error = setpoint - source.pidGet(); // difference between desired value and current value
+        double error = setpoint_pos - source.pidGet(); // difference between desired value and current value
         double errorDelta = (error - lastError); // change in error
 
         errorSum += error * dt; // integrates error over time
@@ -107,14 +128,31 @@ public class PID implements Controller {
             output.pidWrite(0.0);
         }
 
-        output.pidWrite((kP * error) + (kI * errorSum) + (kD * errorDelta));
+        output.pidWrite((kP * error) + (kI * errorSum) + (kD * errorDelta) + headingCompensation() + turnRateCompensation());
     }
 
+    /**
+     * Calculates the appropriate motor power to compensate for angle error
+     * 
+     * @return motor power to compensate for angle error
+     */
     private double headingCompensation() {
         if (gyro == null) {
             return 0.0;
         }
+        return kH * (setpoint_angle - gyro.getAngle());
+    }
 
+    /**
+     * Calculates the dampening factor for turn rate
+     * 
+     * @return motor power to compensate for turn rate error
+     */
+    private double turnRateCompensation() {
+        if (gyro == null) {
+            return 0.0;
+        }
+        return kR * (setpoint_angleRate - gyro.getRate());
     }
 
     public boolean isDone() {

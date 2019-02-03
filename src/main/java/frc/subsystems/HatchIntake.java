@@ -6,11 +6,12 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.robot.RobotMap;
+import frc.settings.HatchIntakeSettings;
 
 /**
  * Grabs the hatch panel from the floor
  */
-public class HatchIntake extends Subsystem implements RobotMap {
+public class HatchIntake extends Subsystem implements RobotMap, HatchIntakeSettings {
 
   private static HatchIntake hatchInstance = null;
 
@@ -29,13 +30,13 @@ public class HatchIntake extends Subsystem implements RobotMap {
   }
 
   private Solenoid intakePiston;
-  private Solenoid tcvPiston;
+  private Solenoid bcvPiston;
   private CANSparkMax hatchIntakeMotor;
 
   // constructor
   public HatchIntake() {
     intakePiston = new Solenoid(INTAKE_SOLENOID);
-    tcvPiston = new Solenoid(TCV_SOLENOID);
+    bcvPiston = new Solenoid(BCV_SOLENOID);
     // the hatch intake motor is connected to a 775, hence it is brushed
     hatchIntakeMotor = new CANSparkMax(HATCH_INTAKE, MotorType.kBrushed);
   }
@@ -65,18 +66,19 @@ public class HatchIntake extends Subsystem implements RobotMap {
     }
   }
 
-  public void runIntake() {
-    hatchState = States.INTAKE;
-  }
 
   public void stopIntake() {
     hatchState = States.STOPPED;
   }
 
+  public void runIntake() {
+    hatchState = States.INTAKE;
+  }
+
   public void reverseIntake() {
     hatchState = States.OUTTAKE;
   }
-
+ 
   public void stow() {
     intakePiston.set(false);
   }
@@ -85,12 +87,12 @@ public class HatchIntake extends Subsystem implements RobotMap {
     intakePiston.set(true);
   }
 
-  public void extendTCV() {
-    tcvPiston.set(true);
+  public void extendBCV() {
+    bcvPiston.set(true);
   }
 
-  public void retractTCV() {
-    tcvPiston.set(false);
+  public void retractBCV() {
+    bcvPiston.set(false);
   }
 
   @Override

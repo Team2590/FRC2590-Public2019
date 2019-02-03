@@ -12,11 +12,12 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.robot.RobotMap;
+import frc.settings.CargoIntakeSettings;
 
 /**
  * Intakes the cargo (playground balls) from the floor
  */
-public class CargoIntake extends Subsystem implements RobotMap {
+public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSettings {
 
   // new singleton
   private static CargoIntake cargoInstance = null;

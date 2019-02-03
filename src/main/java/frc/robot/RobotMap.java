@@ -26,5 +26,5 @@ public interface RobotMap {
     // Hatch Intake and TCV
     public static final int HATCH_INTAKE = 5;
     public static final int INTAKE_SOLENOID = 4;
-    public static final int TCV_SOLENOID = 3;
+    public static final int BCV_SOLENOID = 3;
 }

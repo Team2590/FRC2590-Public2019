@@ -89,9 +89,9 @@ public class Robot extends TimedRobot {
     }
 
     if(rightJoystick.getRawButton(4)) {
-      hatchIntake.extendTCV();
+      hatchIntake.extendBCV();
     } else {
-      hatchIntake.retractTCV();
+      hatchIntake.retractBCV();
     }
 
 

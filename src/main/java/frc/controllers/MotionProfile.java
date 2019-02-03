@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.PIDSourceType;
 public class MotionProfile implements Controller {
 
     private double kP;
+    private double kI;
     private double kV;
     private double kA;
     private double maxVel;
@@ -30,23 +31,28 @@ public class MotionProfile implements Controller {
     private PIDOutput output;
 
     // start and end points of the profile
-    private double startPoint;
-    private double endPoint;
+    private double tolerance;
 
-    // motor outputs and termination of the controller
+    // termination of the controller
     private boolean done;
-    private double[] desiredOutputs;
 
     // checks whether velocity profile is trapezoidal or triangular
     private boolean isTrapezoidal;
 
     // cruising section of profile
     private double travelDistance;
-    private double cruisingDistance;
     private double cappedMaxVel;
 
     // acceleration distance (ends of the profile)
     private double accelerationDistance;
+
+    // iteration count and breakpoints for acceleration changes in profile
+    private int count;
+    private int i1; // iteration step from accel to cruising
+    private int i2; // iteration step from cruising to decel
+
+    // error sum for an integral feedback
+    private double errorSum;
 
     // whether the profile is read forward or backwards
     private boolean backwards;
@@ -62,48 +68,41 @@ public class MotionProfile implements Controller {
      * @param source: sensor source (Encoder, Gyro, Potentiometer, etc)
      * @param output: motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
      */
-    public MotionProfile(double kP, double kV, double kA, double maxVel, double maxAcc, PIDSource source,
+    public MotionProfile(double kP, double kI, double kV, double kA, double maxVel, double maxAcc, double tolerance, PIDSource source,
             PIDOutput output) {
         this.kP = kP;
+        this.kI = kI;
         this.kV = kV;
         this.kA = kA;
         this.maxVel = maxVel;
         this.maxAcc = maxAcc;
         this.source = source;
         this.output = output;
+        this.tolerance = tolerance;
 
         source.setPIDSourceType(PIDSourceType.kDisplacement);
 
-        startPoint = 0.0;
-        endPoint = 0.0;
-
         done = true;
-        desiredOutputs = new double[3]; // desired position, desired velocity, desired acceleration
 
         isTrapezoidal = false;
 
         travelDistance = 0.0;
-        cruisingDistance = 0.0;
         cappedMaxVel = maxVel;
 
         accelerationDistance = 0.0;
+
+        count = 0;
+        i1 = 0;
+        i2 = 0;
+
+        errorSum = 0.0;
 
         backwards = false;
     }
 
     public void setSetpoint(double setpoint) {
-
+        // gets the current position of the source for feedback control
         double currentPos = getSourceDistance();
-
-        // sets the start and end points of the profile
-        startPoint = currentPos;
-        endPoint = setpoint;
-
-        // resets the output array for each new profile
-        desiredOutputs = new double[3];
-        desiredOutputs[0] = currentPos; // desired position
-        desiredOutputs[1] = 0.0; // desired velocity
-        desiredOutputs[2] = 0.0; // desired acceleration
 
         // calculates path direction and distance
         backwards = (currentPos > setpoint);
@@ -116,94 +115,64 @@ public class MotionProfile implements Controller {
         cappedMaxVel = Math.min(maxVel, Math.sqrt(maxAcc * travelDistance));
         accelerationDistance = Math.pow(cappedMaxVel, 2) / (2 * maxAcc); // d = v^2 / 2a
 
+        // sets the first iteration step, aka when the profile switches from accel to
+        // cruising
+        i1 = (int) (cappedMaxVel / (maxAcc * dt));
+
         // creates a trapezoidal path if the robot isn't accelerating for the entire
         isTrapezoidal = (accelerationDistance < (travelDistance / 2));
         if (isTrapezoidal) {
-            cruisingDistance = (travelDistance - 2 * accelerationDistance);
+            i2 = (int) (i1 + (travelDistance - 2 * accelerationDistance) / (cappedMaxVel * dt));
         } else {
             // the velocity profile is triangular, there is no period of constant velocity
-            cruisingDistance = 0.0;
+            accelerationDistance = 0.5 * travelDistance;
+            i2 = i1;
         }
+
+        count = 0;
+        errorSum = 0.0;
     }
 
     public void calculate() {
         if (!done) {
-
-            // gets the sensor's current values for distance and rate
-            // used in calculation for intial position and velocity
             double currentPos = getSourceDistance();
-            double currentVel = getSourceRate();
+            double output_position = 0.0;
+            double output_velocity = 0.0;
+            double output_acceleration = 0.0;
 
-            // resets source type to dispalcement
-            source.setPIDSourceType(PIDSourceType.kDisplacement);
+            count++; // counter for the number of iterated timesteps
 
-            // distances from start and end points
-            double distanceFromStart = Math.abs(startPoint - currentPos);
-            double distanceFromEnd = Math.abs(endPoint - currentPos);
+            if (count < i1) { // accelerating
+                output_acceleration = maxAcc;
+                output_velocity = maxAcc * count * dt;
+                output_position = 0.5 * output_velocity * count * dt; // = 0.5at^2
 
-            // max and min reach velocities (given the next velocity, what is the
-            // fastest/slowest you'll go)
-            double maxReachVel = Math.sqrt(Math.pow(currentVel, 2) + 2 * maxAcc * distanceFromEnd);
-            double minReachVel = Math.sqrt(Math.pow(currentVel, 2) - 2 * maxAcc * distanceFromEnd);
+            } else if (count >= i1 && count < i2) { // cruising
+                output_acceleration = 0;
+                output_velocity = cappedMaxVel;
+                output_position = cappedMaxVel * (count - i1) * dt;
 
-            // makes sure the velocity is non-negative
-            if (!backwards) { // path read forwards
-                if (minReachVel < 0 || currentVel < 0) {
-                    currentVel = Math.min(cappedMaxVel, maxReachVel);
-                }
-            } else { // path read in reverse
-                if (minReachVel < 0) {
-                    currentVel = Math.min(cappedMaxVel, maxReachVel);
-                }
+            } else if (count > i2) { // decelerating
+                output_acceleration = -maxAcc;
+                output_velocity = cappedMaxVel - maxAcc * (count - i2) * dt;
+                output_position = (travelDistance - accelerationDistance) + output_velocity * (count - i2) * dt
+                        + 0.5 * output_acceleration * Math.pow((count - i2), 2) * Math.pow(dt, 2);
+                // the above code is essentially df = di + vt + 0.5at^2
             }
 
-            // checks if the path is finished
-            if (distanceFromStart >= travelDistance) {
-                setDesiredOutputArray(endPoint, 0.0, 0.0);
+            double error = output_position - currentPos;
+
+            //profile is finished, output 0.0 to motors and exit
+            if(Math.abs(error) < tolerance) {
                 done = true;
                 output.pidWrite(0.0);
             }
+            errorSum += error * dt;
 
-            // calculates acceleration/deceleration phases of profile
-            if (distanceFromStart <= accelerationDistance) { // accel
-                setDesiredOutputArray(currentVel * dt + 0.5 * maxAcc * (dt * dt), currentVel + maxAcc * dt, maxAcc);
-
-            } else if (distanceFromStart > (accelerationDistance + cruisingDistance)) { // decel
-                // kinematics subtract the acceleration term because it is negative
-                setDesiredOutputArray(currentVel * dt - 0.5 * maxAcc * (dt * dt), currentVel - maxAcc * dt, -maxAcc);
-
-            }
-
-            // calculates the cruising phase of the profile
-            if (isTrapezoidal && (distanceFromStart > accelerationDistance)
-                    && (distanceFromEnd > accelerationDistance)) {
-                // drive at a constant speed (acceleration = 0)
-                setDesiredOutputArray(currentVel * dt, currentVel, 0);
-            }
-
-            output.pidWrite(desiredOutputs[0] * kP + desiredOutputs[1] * kV + desiredOutputs[2] * kA);
-
+            //kV and kA are feedforward, kP and kI are feedback 
+            output.pidWrite(kV * output_velocity + kA * output_acceleration + kP * error + kI * errorSum);
         }
-
-        // controller is done, output 0.0 just in case
         output.pidWrite(0.0);
-    }
-
-    /**
-     * Sets the output array, a holster for the desired pos, vel, and acc for the
-     * next iteration of the profile.
-     * 
-     * @param position     change in position based on profile
-     * @param velocity     next velocity in profile
-     * @param acceleration next acceleration in profile
-     */
-    private void setDesiredOutputArray(double position, double velocity, double acceleration) {
-        // multiplies all output vars by -1 if reading the traj backwards
-        int direction = (backwards ? -1 : 1);
-
-        desiredOutputs[0] = position * direction; // kinematics calculate delta displacement, automatic error calc
-        desiredOutputs[1] = velocity * direction;
-        desiredOutputs[2] = acceleration * direction;
     }
 
     public boolean isDone() {

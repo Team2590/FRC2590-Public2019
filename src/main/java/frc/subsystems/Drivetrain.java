@@ -7,7 +7,6 @@
 
 package frc.subsystems;
 
-import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
@@ -16,6 +15,7 @@ import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import frc.robot.RobotMap;
 import frc.settings.DrivetrainSettings;
+import frc.util.NemesisCANEncoder;
 
 /**
  * Drivetrain Class for the 2019 Robot Features:
@@ -52,8 +52,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   private CANSparkMax rightDriveSlave;
 
   // encoders for the DT, preinstalled in NEO motors
-  private CANEncoder leftDriveEncoder;
-  private CANEncoder rightDriveEncoder;
+  private NemesisCANEncoder leftDriveEncoder;
+  private NemesisCANEncoder rightDriveEncoder;
 
   // gear shifting piston
   private Solenoid shiftingPiston;
@@ -74,8 +74,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     rightDriveSlave.follow(rightDriveMaster);
 
     // instantiates drive encoders from their NEO motors
-    leftDriveEncoder = leftDriveMaster.getEncoder();
-    rightDriveEncoder = rightDriveMaster.getEncoder();
+    leftDriveEncoder = new NemesisCANEncoder(leftDriveMaster);
+    rightDriveEncoder = new NemesisCANEncoder(rightDriveMaster);
 
     driveSystem = new DifferentialDrive(leftDriveMaster, rightDriveMaster);
 

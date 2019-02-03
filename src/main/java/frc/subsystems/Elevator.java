@@ -7,20 +7,21 @@
 
 package frc.subsystems;
 
-import com.revrobotics.CANEncoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.command.Subsystem;
-import frc.controllers.MotionProfile;
+import frc.controllers.OldMotionProfile;
 import frc.robot.RobotMap;
+import frc.settings.ElevatorSettings;
+import frc.util.NemesisCANEncoder;
 
 /**
  * Moves the Cargo and Hatch Panels to set heights to score points
  * @author Harsh Padhye, Chinmay Savanur
  */
-public class Elevator extends Subsystem implements RobotMap {
+public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
   // new singleton
   private static Elevator elevatorInstance = null;
@@ -42,18 +43,19 @@ public class Elevator extends Subsystem implements RobotMap {
   CANSparkMax elevatorMotor;
 
   //Elevator Encoder
-  CANEncoder elevatorEncoder;
-
+  NemesisCANEncoder elevatorEncoder;
+  
   Encoder temp;
-
   //Motion profile controller to move elevator smoothly and accurately
-  MotionProfile elevatorController;
+  OldMotionProfile elevatorController;
 
 
   public Elevator() {
     // the elevator motor is connected to a 775, hence it is brushed
     elevatorMotor = new CANSparkMax(ELEVATOR_MOTOR, MotorType.kBrushed);
-    elevatorEncoder = new CANEncoder(elevatorMotor);
+    elevatorEncoder = new NemesisCANEncoder(elevatorMotor);
+
+    elevatorController = new OldMotionProfile(ELEVATOR_KP, ELEVATOR_KV, ELEVATOR_KA, 0.0, 0.0, elevatorEncoder, elevatorMotor);
   }
 
   // called every loop of teleop periodic

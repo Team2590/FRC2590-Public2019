@@ -11,4 +11,5 @@ package frc.settings;
  * Organizes the gains & misc values for the cargo intake
  */
 public interface CargoIntakeSettings {
+    
 }
