@@ -1,12 +1,12 @@
 package frc.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.robot.RobotMap;
 import frc.settings.HatchIntakeSettings;
+import frc.util.NemesisVictor;
 
 /**
  * Grabs the hatch panel from the floor
@@ -30,15 +30,13 @@ public class HatchIntake extends Subsystem implements RobotMap, HatchIntakeSetti
   }
 
   private Solenoid intakePiston;
-  private VictorSPX hatchIntakeMotor;
+  private NemesisVictor hatchIntakeMotor;
 
-  // constructor
   public HatchIntake() {
     intakePiston = new Solenoid(INTAKE_SOLENOID);
-    hatchIntakeMotor = new VictorSPX(HATCH_INTAKE);
+    hatchIntakeMotor = new NemesisVictor(HATCH_INTAKE);
   }
 
-  // called every loop of teleop periodic
   public void update() {
     switch (hatchState) {
     case STOPPED:

@@ -22,20 +22,19 @@ public class Turn implements NemesisRunnable{
   public Turn(double angle) {
     setpoint = angle;
     hasStarted = false;
-    System.out.println("stp " + setpoint);
   }
 
   @Override
   public void run() {
     if(!hasStarted) {
-      Robot.getDrivetrainInstance();
+      Robot.getDrivetrainInstance().turn(setpoint);
       hasStarted = true;
     }
   }
 
   @Override
   public boolean isDone() {
-      return true;
+      return Robot.getDrivetrainInstance().isTurnDone() && hasStarted;
   }
 
   @Override 

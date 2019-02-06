@@ -8,11 +8,13 @@
 package frc.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
+import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.command.Subsystem;
+import frc.controllers.MotionProfile;
 import frc.robot.RobotMap;
 import frc.settings.CargoIntakeSettings;
+import frc.util.NemesisVictor;
 
 /**
  * Intakes the cargo (playground balls) from the floor
@@ -32,22 +34,31 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
   private States cargoState = States.STOPPED;
 
   private enum States {
-    STOPPED, INTAKE, OUTTAKE
+    STOPPED, MOVING, INTAKE, OUTTAKE
   }
 
-  private VictorSPX cargoIntakeMotor;
+  private NemesisVictor cargoIntakeMotor;
+  private AnalogPotentiometer cargoPot;
+  private MotionProfile cargoIntakeController;
 
-  // constructor
   public CargoIntake() {
-    // the cargo intake motor is connected to a 775, hence it is brushed
-    cargoIntakeMotor = new VictorSPX(CARGO_INTAKE);
+    cargoIntakeMotor = new NemesisVictor(CARGO_INTAKE);
+    cargoPot = new AnalogPotentiometer(CARGO_POTENTIOMETER);
+    cargoIntakeController = new MotionProfile(CARGO_INTAKE_KP, CARGO_INTAKE_KI, CARGO_INTAKE_KV, CARGO_INTAKE_KA,
+        CARGO_INTAKE_MAX_VEL, CARGO_INTAKE_MAX_ACC, CARGO_INTAKE_TOLERANCE, cargoPot, cargoIntakeMotor);
   }
 
-  // called every loop of teleop periodic
   public void update() {
     switch (cargoState) {
     case STOPPED:
       cargoIntakeMotor.set(ControlMode.PercentOutput, 0.0);
+      break;
+
+    case MOVING:
+      cargoIntakeController.calculate();
+      if(cargoIntakeController.isDone()) {
+        cargoState = States.STOPPED;
+      }
       break;
 
     case INTAKE:

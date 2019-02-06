@@ -45,6 +45,7 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
   // Elevator Encoder
   private NemesisCANEncoder elevatorEncoder;
+  private NemesisCANEncoder failSafeEncoder;
 
   // Motion profile controller to move elevator smoothly and accurately
   private MotionProfile elevatorController;
@@ -56,6 +57,7 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     // the elevator motor is connected to a 775, hence it is brushed
     elevatorMotor = new CANSparkMax(ELEVATOR_MOTOR, MotorType.kBrushed);
     elevatorEncoder = new NemesisCANEncoder(elevatorMotor);
+    failSafeEncoder = new NemesisCANEncoder(elevatorMotor);
 
     elevatorController = new MotionProfile(ELEVATOR_KP, ELEVATOR_KI, ELEVATOR_KV, ELEVATOR_KA, ELEVATOR_MAX_VEL,
         ELEVATOR_MAX_ACC, ELEVATOR_TOLERANCE, elevatorEncoder, elevatorMotor);

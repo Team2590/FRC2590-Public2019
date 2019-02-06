@@ -11,5 +11,14 @@ package frc.settings;
  * Organizes the gains & misc values for the cargo intake
  */
 public interface CargoIntakeSettings {
-    
+
+    // Motion Profile Constants
+    public static final double CARGO_INTAKE_KP = 0.0;
+    public static final double CARGO_INTAKE_KI = 0.0;
+    public static final double CARGO_INTAKE_KV = 0.0;
+    public static final double CARGO_INTAKE_KA = 0.0;
+
+    public static final double CARGO_INTAKE_MAX_VEL = 0.0;
+    public static final double CARGO_INTAKE_MAX_ACC = 0.0;
+    public static final double CARGO_INTAKE_TOLERANCE = 0.0;
 }

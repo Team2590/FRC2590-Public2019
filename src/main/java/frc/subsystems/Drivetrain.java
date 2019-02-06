@@ -74,6 +74,9 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   // straight: Left Joystick Y axis; turn: Right Joystick X Axis
   private double straightPower, turnPower;
 
+  //accessory variable for the turn command to see if the DT has finished turning
+  private boolean turnDone;
+
   public Drivetrain() {
 
     leftDriveMaster = new CANSparkMax(LEFT_DRIVE_MASTER, MotorType.kBrushless);
@@ -99,6 +102,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
     straightPower = 0.0;
     turnPower = 0.0;
+
+    turnDone = true;
   }
 
   // updates the drivetrain's state with every iteration of teleopPeriodic()
@@ -123,6 +128,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     case TURN:
       turnController.calculate();
       if (turnController.isDone()) {
+        turnDone = true;
         driveState = States.STOPPED;
       }
       break;
@@ -157,8 +163,13 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     driveState = States.TELEOP_DRIVE;
   }
 
+  /**
+   * Commands the drivetrain to turn in place
+   * @param setpoint The angle (in degrees) to turn to
+   */
   public void turn(double setpoint) {
     turnController.setSetpoint(setpoint);
+    turnDone = false;
     driveState = States.TURN;
   }
 
@@ -196,6 +207,10 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
   public DifferentialDrive getRobotDrive() {
     return driveSystem;
+  }
+
+  public boolean isTurnDone() {
+    return turnDone;
   }
 
   @Override

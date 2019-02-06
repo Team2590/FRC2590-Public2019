@@ -9,6 +9,7 @@ package frc.controllers;
 
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.PIDSource;
+import edu.wpi.first.wpilibj.PIDSourceType;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
 
 /**
@@ -60,6 +61,8 @@ public class PID implements Controller {
         this.source = source;
         this.output = output;
         this.gyro = gyro;
+
+        source.setPIDSourceType(PIDSourceType.kDisplacement);
 
         errorSum = 0.0;
         lastError = 0.0;
@@ -126,9 +129,10 @@ public class PID implements Controller {
 
         if (done) {
             output.pidWrite(0.0);
+        } else {
+            output.pidWrite((kP * error) + (kI * errorSum) + (kD * errorDelta) + headingCompensation()
+                    + turnRateCompensation());
         }
-
-        output.pidWrite((kP * error) + (kI * errorSum) + (kD * errorDelta) + headingCompensation() + turnRateCompensation());
     }
 
     /**

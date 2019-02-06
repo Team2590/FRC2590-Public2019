@@ -12,7 +12,7 @@ import frc.robot.Robot;
 
 public class DriveStraight implements NemesisRunnable {
 
-    private boolean isInitialized;
+    private boolean hasStarted;
     private double howFar;
 
     /**
@@ -25,7 +25,7 @@ public class DriveStraight implements NemesisRunnable {
 
     @Override
     public void run() {
-        if(!isInitialized) { // if the robot has not started driving, begin driving straight
+        if(!hasStarted) { // if the robot has not started driving, begin driving straight
         }
     }
 
