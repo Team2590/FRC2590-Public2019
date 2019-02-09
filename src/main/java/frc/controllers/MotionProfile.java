@@ -30,7 +30,8 @@ public class MotionProfile implements Controller {
     private PIDSource source;
     private PIDOutput output;
 
-    // start and end points of the profile
+    // end points and tolerance of the profile
+    private double endPoint;
     private double tolerance;
 
     // termination of the controller
@@ -53,14 +54,14 @@ public class MotionProfile implements Controller {
     // error sum for an integral feedback
     private double errorSum;
 
-    // total estimated time to follow the profile
+    // estimated total time to follow the profile
     private double totalTime;
 
-    // whether the profile is read forward or backwards
+    // whether the profile is read forwards or backwards
     private boolean backwards;
 
     /**
-     * Motion Profile Controller Allows for smooth and accurate path following
+     * Motion Profile Controller allows for smooth and accurate path following
      * 
      * @param kP        proportional feedback
      * @param kI        integral feedback
@@ -88,6 +89,7 @@ public class MotionProfile implements Controller {
 
         done = true;
 
+        endPoint = 0.0;
         travelDistance = 0.0;
         capMaxVel = maxVel;
 
@@ -108,6 +110,9 @@ public class MotionProfile implements Controller {
     public void setSetpoint(double setpoint) {
         // gets the current position of the source for feedback control
         double currentPos = getSourceDistance();
+        
+        //sets the endpoint as the desired setpoint
+        endPoint = setpoint;
 
         // calculates path direction and distance
         backwards = (currentPos > setpoint);
@@ -167,7 +172,7 @@ public class MotionProfile implements Controller {
             double command = kV * output_velocity + kA * output_acceleration + kP * error + kI * errorSum;
 
             // profile is finished, output 0.0 to motors and exit
-            if (Math.abs(error) < tolerance) {
+            if (Math.abs(endPoint - currentPos) < tolerance) {
                 done = true;
                 command = 0.0;
             }
