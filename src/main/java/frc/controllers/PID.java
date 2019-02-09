@@ -41,26 +41,19 @@ public class PID implements Controller {
      * @param kP        Proportional gain
      * @param kI        Integral gain
      * @param kD        Derivative gain
-     * @param kH        Heading gain
-     * @param kR        Angular rate gain
      * @param tolerance Acceptable range from setpoint to stop the controller
      * @param source    Sensor source (Encoder, Gyro, Potentiometer, etc)
      * @param output    Motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
-     * @param gyro      Gyro sensor for current angle and angular rate
      */
-    public PID(double kP, double kI, double kD, double kH, double kR, double tolerance, PIDSource source,
-            PIDOutput output, Gyro gyro) {
+    public PID(double kP, double kI, double kD, double tolerance, PIDSource source, PIDOutput output) {
         this.kP = kP;
         this.kI = kI;
         this.kD = kD;
-        this.kH = kH;
-        this.kR = kR;
 
         this.tolerance = tolerance;
 
         this.source = source;
         this.output = output;
-        this.gyro = gyro;
 
         source.setPIDSourceType(PIDSourceType.kDisplacement);
 
@@ -72,17 +65,27 @@ public class PID implements Controller {
     }
 
     /**
-     * PID Controller WITHOUT Gyro input
+     * Proportional, integral, and derivative feedback controller Allows the input
+     * of a second sensor (gyro) for heading correction
      * 
      * @param kP        Proportional gain
      * @param kI        Integral gain
      * @param kD        Derivative gain
+     * @param kH        Heading gain
+     * @param kR        Angular rate gain
      * @param tolerance Acceptable range from setpoint to stop the controller
      * @param source    Sensor source (Encoder, Gyro, Potentiometer, etc)
      * @param output    Motor output (TalonSRX, VictorSPX, CANSparkMax, etc)
+     * @param gyro      Gyro sensor for current angle and angular rate
      */
-    public PID(double kP, double kI, double kD, double tolerance, PIDSource source, PIDOutput output) {
-        this(kP, kI, kD, 0.0, 0.0, tolerance, source, output, null);
+    public PID(double kP, double kI, double kD, double kH, double kR, double tolerance, PIDSource source,
+            PIDOutput output, Gyro gyro) {
+
+        this(kP, kI, kD, tolerance, source, output);
+
+        this.kH = kH;
+        this.kR = kR;
+        this.gyro = gyro;
     }
 
     /**
