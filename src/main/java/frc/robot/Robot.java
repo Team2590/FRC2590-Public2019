@@ -12,6 +12,7 @@ import frc.subsystems.Carriage;
 import frc.subsystems.Drivetrain;
 import frc.subsystems.Elevator;
 import frc.subsystems.HatchIntake;
+import frc.util.Limelight;
 import frc.util.NemesisJoystick;
 
 public class Robot extends TimedRobot implements FieldSettings {
@@ -27,6 +28,9 @@ public class Robot extends TimedRobot implements FieldSettings {
   private static CargoIntake cargoIntake;
   private static Carriage carriage;
   private static Elevator elevator;
+
+  // Limelight camera for vision targeting
+  private static Limelight limelight;
 
   // controls if the elevator setpoints correlate to hatch heights or ball heights
   // true if hatch heights, false if cargo heights
@@ -46,6 +50,8 @@ public class Robot extends TimedRobot implements FieldSettings {
     cargoIntake = CargoIntake.getCargoIntakeInstance();
     carriage = Carriage.getCarriageInstance();
     elevator = Elevator.getElevatorInstance();
+
+    limelight = Limelight.getLimelightInstance();
 
     hatchButtonMode = true;
   }
@@ -81,8 +87,22 @@ public class Robot extends TimedRobot implements FieldSettings {
   @Override
   public void teleopPeriodic() {
 
+    // This logic checks if the robot is still turning, to avoid switching states to
+    // teleop in the middle of the control loop
+    // Also prevents driver from moving the robot while it auto aligns
+    // if (drivetrain.isTurnDone()) {
     // inverts Y axis; pushing the joystick forward drives forward
-    drivetrain.teleopDrive(-leftJoystick.getY() * 0.5, rightJoystick.getX() * 0.5);
+    drivetrain.teleopDrive(leftJoystick.getY() * 0.75, rightJoystick.getX() * 0.75);
+    // }
+
+    // Auto Align
+    // input the limelight reading once to avoid latency issues
+
+    /*
+     * if (leftJoystick.getRisingEdge(1)) { limelight.update(); double
+     * visionSetpoint = limelight.horizontalAngleToTarget();
+     * drivetrain.turn(-visionSetpoint); }
+     */
 
     // Hatch Intake controls for Intaking, Spitting, and Stopping
     if (rightJoystick.getRawButton(1)) {
@@ -95,9 +115,9 @@ public class Robot extends TimedRobot implements FieldSettings {
 
     // lifts and drops hatch dustpan
     if (rightJoystick.getRawButton(3)) {
-      hatchIntake.drop();
+      // hatchIntake.drop();
     } else {
-      hatchIntake.stow();
+      // hatchIntake.stow();
     }
 
     // opens and closes Bicuspid valve
@@ -144,7 +164,7 @@ public class Robot extends TimedRobot implements FieldSettings {
     }
 
     // updates each subsystem at the tail end of each loop
-    hatchIntake.update();
+    // hatchIntake.update();
     drivetrain.update();
   }
 
@@ -174,6 +194,10 @@ public class Robot extends TimedRobot implements FieldSettings {
 
   public static Elevator getElevatorInstance() {
     return elevator;
+  }
+
+  public static Limelight getLimelightInstance() {
+    return limelight;
   }
 
 }

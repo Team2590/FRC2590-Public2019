@@ -12,13 +12,16 @@ package frc.settings;
  */
 public interface CarriageSettings {
 
-    //Motion Profile Constants
+    // Motion Profile Constants
     public static final double CARRIAGE_KP = 0.0;
     public static final double CARRIAGE_KI = 0.0;
-    public static final double CARRIAGE_KV = 0.0;
+    public static final double CARRIAGE_KV = 1/1123; // 1123 deg/s free speed
     public static final double CARRIAGE_KA = 0.0;
 
     public static final double CARRIAGE_MAX_VEL = 0.0;
     public static final double CARRIAGE_MAX_ACC = 0.0;
     public static final double CARRIAGE_TOLERANCE = 0.0;
+
+    public static final double FRONT_POSITION = 0.0;
+    public static final double BACK_POSITION = 180.0;
 }

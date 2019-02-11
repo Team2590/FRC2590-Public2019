@@ -110,8 +110,8 @@ public class MotionProfile implements Controller {
     public void setSetpoint(double setpoint) {
         // gets the current position of the source for feedback control
         double currentPos = getSourceDistance();
-        
-        //sets the endpoint as the desired setpoint
+
+        // sets the endpoint as the desired setpoint
         endPoint = setpoint;
 
         // calculates path direction and distance

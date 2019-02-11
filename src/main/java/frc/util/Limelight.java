@@ -32,15 +32,10 @@ public class Limelight extends Subsystem implements LimelightSettings {
   }
 
   // network table from limelight camera
-  NetworkTable table;
+  private NetworkTable table;
 
   // target coordinates and values
-  double tx, ty, tz, tv;
-
-  // used for auto-aligning process
-  double kPAim = -0.1;
-  double kPDistance = -0.1;
-  double min_aim_command = 0.05;
+  private double tx, ty, tz, tv;
 
   public Limelight() {
     table = NetworkTableInstance.getDefault().getTable("limelight");
@@ -90,37 +85,6 @@ public class Limelight extends Subsystem implements LimelightSettings {
    */
   public double distanceToTarget() {
     return (HATCH_TARGET_HEIGHT - CAMERA_HEIGHT) / Math.tan(CAMERA_ANGLE + verticalAngleToTarget());
-  }
-
-  /**
-   * Adjusts steering based on the horizontal offset
-   * 
-   * @return the value to adjust steering by to get it in line with target
-   */
-  public double adjustSteering() {
-
-    double headingError = (double) -tx;
-    double steeringAdjust = 0.0f;
-
-    if (tx > 1.0) {
-      steeringAdjust = kPAim * headingError - min_aim_command;
-    } else if (tx < 1.0) {
-      steeringAdjust = kPAim * headingError + min_aim_command;
-    }
-
-    return steeringAdjust;
-  }
-
-  /**
-   * Adjusts distance based on the vertical offset
-   * 
-   * @return the value to adjust distance by to get it within range of the target
-   */
-  public double adjustDistance() {
-    double distanceError = (double) -ty;
-    double distanceAdjust = kPDistance * distanceError;
-
-    return distanceAdjust;
   }
 
   @Override
