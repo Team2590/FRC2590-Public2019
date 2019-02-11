@@ -54,6 +54,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
+    //speeds are currently set to 33% of max since the drivebase is ~1/3 the max weight on its own
+    //omni wheels cause massive fish-tailing at high turn speeds, this should minimize that effect
     drivetrain.setSpeeds(leftJoystick.getY() * .33, rightJoystick.getX() * .33);
   }
 

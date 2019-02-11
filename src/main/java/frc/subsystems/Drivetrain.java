@@ -27,6 +27,13 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 		}
 		return driveInstance;
   }
+
+  
+  private States driveState = States.STOPPED;
+	private enum States {
+		STOPPED , TELEOP_DRIVE , PATH_FOLLOWING , 
+		TURN , DRIVE_STRAIGHT, VELOCITY
+	}
   
   Victor leftDrive;
   Victor rightDrive;
@@ -52,4 +59,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     // Set the default command for a subsystem here.
     // setDefaultCommand(new MySpecialCommand());
   }
+
+
+  
 }
