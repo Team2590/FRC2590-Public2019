@@ -8,12 +8,15 @@
 package frc.subsystems;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import frc.controllers.MotionProfile;
 import frc.controllers.PID;
 import frc.robot.RobotMap;
 import frc.settings.DrivetrainSettings;
@@ -70,12 +73,17 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   // PID controller for turning in place
   private PID turnController;
 
+  // Motion Profile controller for driving autonomously
+  private MotionProfile leftDriveController;
+  private MotionProfile rightDriveController;
+
   // these variables are substitutes for teleop joystick commands
   // straight: Left Joystick Y axis; turn: Right Joystick X Axis
   private double straightPower, turnPower;
 
-  //accessory variable for the turn command to see if the DT has finished turning
-  private boolean turnDone;
+  // accessory variable for the turn/drive straight command to see if the DT has
+  // finished its control loop
+  private boolean turnDone, driveStraightDone;
 
   public Drivetrain() {
 
@@ -92,18 +100,30 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     leftDriveEncoder = new NemesisCANEncoder(leftDriveMaster);
     rightDriveEncoder = new NemesisCANEncoder(rightDriveMaster);
 
+    leftDriveEncoder.setReverseDirection(true);
+
+    // sets the drive motors to coast when neutral
+    setDriveIdleModes(IdleMode.kCoast);
+
     driveSystem = new DifferentialDrive(leftDriveMaster, rightDriveMaster);
     dualMotorControllers = new NemesisMultiMC(leftDriveMaster, rightDriveMaster);
 
-    shiftingPiston = new Solenoid(GEAR_SHIFT_SOLENOID);
-    gyro = new ADXRS450_Gyro();
+    // shiftingPiston = new Solenoid(GEAR_SHIFT_SOLENOID);
+    gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS1);
 
     turnController = new PID(TURN_KP, TURN_KI, TURN_KD, 2.0, gyro, dualMotorControllers);
+
+    // 80 in/sec^2 arbitrary accel value to avoid syntax error
+    leftDriveController = new MotionProfile(DRIVETRAIN_KP, DRIVETRAIN_KI, DRIVETRAIN_KV, DRIVETRAIN_KA,
+        MAX_HIGH_GEAR_VELOCITY, 80, 2.0, leftDriveEncoder, leftDriveMaster);
+    rightDriveController = new MotionProfile(DRIVETRAIN_KP, DRIVETRAIN_KI, DRIVETRAIN_KV, DRIVETRAIN_KA,
+        MAX_HIGH_GEAR_VELOCITY, 80, 2.0, rightDriveEncoder, rightDriveMaster);
 
     straightPower = 0.0;
     turnPower = 0.0;
 
     turnDone = true;
+    driveStraightDone = true;
   }
 
   // updates the drivetrain's state with every iteration of teleopPeriodic()
@@ -111,12 +131,16 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     // switch statement controlled by driveState
     switch (driveState) {
     case STOPPED:
+
       setSpeeds(0, 0);
       break;
 
     case TELEOP_DRIVE:
       automaticGearShift();
       driveSystem.arcadeDrive(straightPower, turnPower);
+      System.out.println("Left Encoder : " + leftDriveEncoder.getPosition());
+      System.out.println("Right Encoder : " + rightDriveEncoder.getPosition());
+      System.out.println("Gyro : " + gyro.getAngle());
       break;
 
     case AUTON_DRIVE:
@@ -134,6 +158,13 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
       break;
 
     case DRIVE_STRAIGHT:
+      leftDriveController.calculate();
+      rightDriveController.calculate();
+
+      if (leftDriveController.isDone() && rightDriveController.isDone()) {
+        driveStraightDone = true;
+        driveState = States.STOPPED;
+      }
       break;
 
     default:
@@ -165,12 +196,28 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
   /**
    * Commands the drivetrain to turn in place
+   * 
    * @param setpoint The angle (in degrees) to turn to
    */
   public void turn(double setpoint) {
     turnController.setSetpoint(setpoint);
     turnDone = false;
     driveState = States.TURN;
+  }
+
+  /**
+   * Drives the robot in a straight line to a setpoint in high gear
+   * 
+   * @param setpoint How far the robot should move
+   */
+  public void driveStraight(double setpoint) {
+    // shifts to high gear
+    manualGearShift(false);
+
+    driveStraightDone = false;
+    leftDriveController.setSetpoint(setpoint);
+    rightDriveController.setSetpoint(setpoint);
+    driveState = States.DRIVE_STRAIGHT;
   }
 
   /**
@@ -192,7 +239,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     // averages the two sides to find center speed
     double robotSpeed = (leftDriveEncoder.getVelocity() + rightDriveEncoder.getVelocity()) / 2;
 
-    shiftingPiston.set(robotSpeed < MAX_LOW_GEAR_VELOCITY); // need to see if velocity returns ft/s
+    shiftingPiston.set(robotSpeed < MAX_LOW_GEAR_VELOCITY); // convert from ft/s to in/s
   }
 
   /**
@@ -205,12 +252,35 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     shiftingPiston.set(isLowGear);
   }
 
+  /**
+   * Sets the drive motors to brake or coast when stopped/idling
+   * 
+   * @param mode kBrake or kCoast
+   */
+  public void setDriveIdleModes(IdleMode mode) {
+    leftDriveMaster.setIdleMode(mode);
+    leftDriveSlave.setIdleMode(mode);
+    rightDriveMaster.setIdleMode(mode);
+    rightDriveSlave.setIdleMode(mode);
+  }
+
+  /**
+   * Resets the DT's encoders and gyros
+   */
+  public void resetAllSensors() {
+    gyro.reset();
+  }
+
   public DifferentialDrive getRobotDrive() {
     return driveSystem;
   }
 
   public boolean isTurnDone() {
     return turnDone;
+  }
+
+  public boolean isDriveStraightDone() {
+    return driveStraightDone;
   }
 
   @Override
