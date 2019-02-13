@@ -13,25 +13,29 @@ import frc.robot.Robot;
 public class DriveStraight implements NemesisRunnable {
 
     private boolean hasStarted;
-    private double howFar;
+    private double setpoint;
 
     /**
      * Drives in a straight line using motion profiling
      * @param distance distance to travel to in inches
      */
     public DriveStraight(double distance) {
-        howFar = distance;
+        setpoint = distance;
+        hasStarted = false;
     }
 
     @Override
     public void run() {
-        if(!hasStarted) { // if the robot has not started driving, begin driving straight
+        // if the robot has not started driving, begin driving straight
+        if(!hasStarted) { 
+            Robot.getDrivetrainInstance().driveStraight(setpoint);
+            hasStarted = true;
         }
     }
 
     @Override
     public boolean isDone() {
-        return true;
+        return hasStarted && Robot.getDrivetrainInstance().isDriveStraightDone();
     }
 
     @Override 

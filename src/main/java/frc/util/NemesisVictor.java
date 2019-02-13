@@ -12,7 +12,8 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import edu.wpi.first.wpilibj.PIDOutput;
 
 /**
- * Add your docs here.
+ * Custom VictorSPX class that implements PIDOutput
+ * @author Harsh Padhye
  */
 public class NemesisVictor extends VictorSPX implements PIDOutput{
 

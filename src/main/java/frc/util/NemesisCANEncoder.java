@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.PIDSourceType;
 
 /**
  * Same as CANEncoder, but implements PIDSource for use in motion controllers
+ * @author Harsh Padhye
  */
 public class NemesisCANEncoder extends CANEncoder implements PIDSource {
 
@@ -25,12 +26,12 @@ public class NemesisCANEncoder extends CANEncoder implements PIDSource {
 
     @Override
     public double getPosition() {
-        return super.getPosition() * (reverseDirection? -1 : 1);
+        return super.getPosition() * (reverseDirection ? -1 : 1);
     }
-    
+
     @Override
     public double getVelocity() {
-        return super.getVelocity() * (reverseDirection? -1 : 1);
+        return super.getVelocity() * (reverseDirection ? -1 : 1);
     }
 
     @Override

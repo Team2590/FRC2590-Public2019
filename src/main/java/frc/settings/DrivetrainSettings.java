@@ -6,7 +6,9 @@ package frc.settings;
  */
 public interface DrivetrainSettings {
 
-    public static final int MAX_LOW_GEAR_VELOCITY = 7;
+    //max speeds of the DT in ft/s, converted to in/s
+    public static final double MAX_LOW_GEAR_VELOCITY = 5.53 * 12;
+    public static final double MAX_HIGH_GEAR_VELOCITY = 15.75 * 12;
 
     // drivetrain dimensions (inches)
     public static final double WHEEL_DIAMETER = 6.0;
