@@ -33,8 +33,8 @@ public class HatchIntake extends Subsystem implements RobotMap, HatchIntakeSetti
   private NemesisVictor hatchIntakeMotor;
 
   public HatchIntake() {
-    intakePiston = new Solenoid(INTAKE_SOLENOID);
-    hatchIntakeMotor = new NemesisVictor(HATCH_INTAKE);
+   intakePiston = new Solenoid(INTAKE_SOLENOID);
+   hatchIntakeMotor = new NemesisVictor(HATCH_INTAKE);
   }
 
   public void update() {

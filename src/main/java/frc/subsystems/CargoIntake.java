@@ -38,14 +38,19 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
   }
 
   private NemesisVictor cargoIntakeMotor;
+  private NemesisVictor cargoArticulateMotor;
   private AnalogPotentiometer cargoPot;
-  private MotionProfile cargoIntakeController;
+  private MotionProfile cargoArticulateController;
 
   public CargoIntake() {
     cargoIntakeMotor = new NemesisVictor(CARGO_INTAKE);
-    cargoPot = new AnalogPotentiometer(CARGO_POTENTIOMETER);
-    cargoIntakeController = new MotionProfile(CARGO_INTAKE_KP, CARGO_INTAKE_KI, CARGO_INTAKE_KV, CARGO_INTAKE_KA,
-        CARGO_INTAKE_MAX_VEL, CARGO_INTAKE_MAX_ACC, CARGO_INTAKE_TOLERANCE, cargoPot, cargoIntakeMotor);
+    // cargoArticulateMotor = new NemesisVictor(CARGO_ARTICULATOR);
+    // cargoPot = new AnalogPotentiometer(CARGO_POTENTIOMETER);
+    // cargoArticulateController = new MotionProfile(CARGO_INTAKE_KP,
+    // CARGO_INTAKE_KI,
+    // CARGO_INTAKE_KV, CARGO_INTAKE_KA,
+    // CARGO_INTAKE_MAX_VEL, CARGO_INTAKE_MAX_ACC, CARGO_INTAKE_TOLERANCE, cargoPot,
+    // cargoArticulateMotor);
   }
 
   public void update() {
@@ -55,8 +60,12 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
       break;
 
     case MOVING:
-      cargoIntakeController.calculate();
-      if(cargoIntakeController.isDone()) {
+      //stops intake wheels from spinning while the arm is moving
+      cargoIntakeMotor.set(ControlMode.PercentOutput, 0.0);
+
+      //moves arm via motion profiling
+      cargoArticulateController.calculate();
+      if (cargoArticulateController.isDone()) {
         cargoState = States.STOPPED;
       }
       break;
@@ -86,6 +95,15 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
 
   public void reverseIntake() {
     cargoState = States.OUTTAKE;
+  }
+
+  public void moveCargoIntake(double setpoint) {
+    cargoArticulateController.setSetpoint(setpoint);
+    cargoState = States.MOVING;
+  }
+
+  public double getPosition() {
+    return cargoPot.get();
   }
 
   @Override

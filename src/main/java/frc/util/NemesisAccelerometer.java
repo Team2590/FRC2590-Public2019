@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.AnalogAccelerometer;
 
 /**
  * Custom accelerometer class to account for linear acceleration
+ * WIP*****
  * @author Harsh Padhye
  */
 public class NemesisAccelerometer extends AnalogAccelerometer {

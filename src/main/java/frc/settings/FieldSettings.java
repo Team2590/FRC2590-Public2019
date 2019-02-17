@@ -25,4 +25,7 @@ public interface FieldSettings {
     // setpoints for the hatch and cargo heights on the Cargo Ship
     public static final double CARGO_SHIP_HATCH = 0.0;
     public static final double CARGO_SHIP_CARGO = 0.0;
+
+    // refresh rate for the Looper class
+    public static final double REFRESH_RATE = 0.02; // 20ms
 }

@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.PIDSourceType;
 
 /**
  * Same as CANEncoder, but implements PIDSource for use in motion controllers
+ * 
  * @author Harsh Padhye
  */
 public class NemesisCANEncoder extends CANEncoder implements PIDSource {

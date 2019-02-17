@@ -49,6 +49,8 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings {
 
   private MotionProfile carriageController;
 
+  private int currentPosition;
+
   private boolean isOnFront;
   // if the carriage is backwards, and the driver wants to go to hatch mode, the
   // carriage will swing to the front, and insteading of stopping, will
@@ -60,17 +62,20 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings {
     bcvExtender = new Solenoid(BCV_EXTENDER_SOLENOID);
     armPiston = new Solenoid(ARM_SOLENOID);
 
-    leftMotor = new NemesisVictor(LEFT_CARRIAGE_MOTOR);
-    rightMotor = new NemesisVictor(RIGHT_CARRIAGE_MOTOR);
-    swingMotor = new NemesisVictor(SWING_CARRIAGE_MOTOR);
+    // leftMotor = new NemesisVictor(LEFT_CARRIAGE_MOTOR);
+    // rightMotor = new NemesisVictor(RIGHT_CARRIAGE_MOTOR);
+    // swingMotor = new NemesisVictor(SWING_CARRIAGE_MOTOR);
 
-    carriagePot = new AnalogPotentiometer(CARRIAGE_POTENTIOMETER);
+    // carriagePot = new AnalogPotentiometer(CARRIAGE_POTENTIOMETER);
 
-    carriageController = new MotionProfile(CARRIAGE_KP, CARRIAGE_KI, CARRIAGE_KV, CARRIAGE_KA, CARRIAGE_MAX_VEL,
-        CARRIAGE_MAX_ACC, CARRIAGE_TOLERANCE, carriagePot, swingMotor);
+    // carriageController = new MotionProfile(CARRIAGE_KP, CARRIAGE_KI, CARRIAGE_KV,
+    // CARRIAGE_KA, CARRIAGE_MAX_VEL,
+    // CARRIAGE_MAX_ACC, CARRIAGE_TOLERANCE, carriageAccelerometer, swingMotor);
 
-    isOnFront = false; // starts backwards in frame perimeter
-    moveToHatchMode = false;
+    currentPosition = 0;
+    // isOnFront = false; // starts backwards in frame perimeter
+    // moveToHatchMode = false;
+
   }
 
   public void update() {
@@ -81,7 +86,16 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings {
       break;
 
     case MOVING:
+      // makes sure the elements of the carraige are stowed before moving
+      closeArms();
+      closeBCV();
+      retractBCV();
+
+      // moves the carriage to desired setpoint via motion profiling
       carriageController.calculate();
+
+      // checks if the controller is done
+      // and which mode to engage (hatch, cargo, stopped)
       if (carriageController.isDone()) {
         if (moveToHatchMode) {
           carriageState = States.HATCH_MODE;
@@ -98,14 +112,18 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings {
       break;
 
     case HATCH_MODE:
-      if (isOnFront) {
-        //opens the arms to make space for hatch panel
+      // a button click engages hatch mode
+      // the following logic takes determines if the carriage is currently in the
+      // front or the back and moves the carriage/opens the arms accordingly
+      // carriage cannot swing through elevator with open arms
+      if (getCurrentOrientation() == 1) {
+        // opens the arms to make space for hatch panel
         openArms();
         moveToHatchMode = false;
       } else {
-        //moves carriage to front, automatically engages hatch mode afterwards
+        // moves carriage to front, automatically engages hatch mode afterwards
         moveToHatchMode = true;
-        swingCarriage(true);
+        swingCarriage(1);
       }
       break;
 
@@ -130,43 +148,78 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings {
   /**
    * Moves the carriage back and forth through the elevator
    * 
-   * @param frontSide true if the carriage will move to the front of the elevator
+   * @param position 0 : Back Position of carriage
+   * @param position 1 : Front Position of carriage
+   * @param position 2 : Hatch handoff position of carriage
    */
-  public void swingCarriage(boolean frontSide) {
-    if (frontSide) {
-      carriageController.setSetpoint(0);
+  public void swingCarriage(int position) {
+    if (position == 2) {
+      carriageController.setSetpoint(HATCH_HANDOFF_POSITION);
+      currentPosition = 2;
+    } else if (position == 1) {
+      carriageController.setSetpoint(FRONT_POSITION);
+      currentPosition = 1;
     } else {
-      carriageController.setSetpoint(180);
+      carriageController.setSetpoint(BACK_POSITION);
+      currentPosition = 0; 
     }
     carriageState = States.MOVING;
   }
 
+  /**
+   * Opens the BCV finger to grab the hatch
+   * Can only extend when arms are open
+   */
   public void openBCV() {
     bcvFingers.set(true);
   }
 
+  /**
+   * Closes BCV fingers to release hatch
+   */
   public void closeBCV() {
     bcvFingers.set(false);
   }
 
+  /**
+   * Extends the slide outwards
+   */
   public void extendBCV() {
     bcvExtender.set(true);
   }
 
+  /**
+   * Retracts the slide back in
+   */
   public void retractBCV() {
     bcvExtender.set(false);
   }
 
+  /**
+   * Opens the intake arms to create space for the hatch
+   */
   public void openArms() {
     armPiston.set(false);
   }
 
+  /**
+   * Closes intake arms to grip the cargo
+   */
   public void closeArms() {
     armPiston.set(true);
   }
 
-  public boolean getCurrentOrientation() {
-    return isOnFront;
+  /**
+   * Calculates whether the carriage is on the front side of the elevator based on
+   * potentiometer values
+   * 
+   * @return true if the carriage is on the front side
+   */
+  public int getCurrentOrientation() {
+    int orientation = 1;
+    // do the pot calculation here
+    isOnFront = true; // subject tto change based on calcs
+    return orientation;
   }
 
   @Override

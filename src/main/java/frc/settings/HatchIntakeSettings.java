@@ -11,5 +11,5 @@ package frc.settings;
  * Organizes the gains & misc values for the hatch intake
  */
 public interface HatchIntakeSettings {
-    
+
 }

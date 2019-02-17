@@ -7,12 +7,12 @@
 
 package frc.subsystems;
 
+import com.revrobotics.CANPIDController;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
-import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -24,7 +24,7 @@ import frc.util.NemesisCANEncoder;
 import frc.util.NemesisMultiMC;
 
 /**
- * Drivetrain Class for the 2019 Robot Features:
+ * Drivetrain Class for the 2019 Robot
  * 
  * @author Harsh Padhye
  */
@@ -70,12 +70,16 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   // Gyro sensor for reading the robots heading
   private ADXRS450_Gyro gyro;
 
+  // Built-in PID controllers to linearize each drivetrain side
+  private CANPIDController leftDriveLinearizer;
+  private CANPIDController rightDriveLinearizer;
+
   // PID controller for turning in place
   private PID turnController;
 
   // Motion Profile controller for driving autonomously
-  private MotionProfile leftDriveController;
-  private MotionProfile rightDriveController;
+  private MotionProfile leftDriveProfiler;
+  private MotionProfile rightDriveProfiler;
 
   // these variables are substitutes for teleop joystick commands
   // straight: Left Joystick Y axis; turn: Right Joystick X Axis
@@ -89,7 +93,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
     leftDriveMaster = new CANSparkMax(LEFT_DRIVE_MASTER, MotorType.kBrushless);
     leftDriveSlave = new CANSparkMax(LEFT_DRIVE_SLAVE, MotorType.kBrushless);
-    rightDriveMaster = new CANSparkMax(RIGHT_DIRVE_MASTER, MotorType.kBrushless);
+    rightDriveMaster = new CANSparkMax(RIGHT_DRIVE_MASTER, MotorType.kBrushless);
     rightDriveSlave = new CANSparkMax(RIGHT_DRIVE_SLAVE, MotorType.kBrushless);
 
     // set the slave controllers to follow their respective masters(same side)
@@ -102,21 +106,34 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
     leftDriveEncoder.setReverseDirection(true);
 
+    //converts units of encoders
+    setConversionFactors();
+
     // sets the drive motors to coast when neutral
     setDriveIdleModes(IdleMode.kCoast);
 
     driveSystem = new DifferentialDrive(leftDriveMaster, rightDriveMaster);
     dualMotorControllers = new NemesisMultiMC(leftDriveMaster, rightDriveMaster);
 
-    // shiftingPiston = new Solenoid(GEAR_SHIFT_SOLENOID);
-    gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS1);
+    shiftingPiston = new Solenoid(GEAR_SHIFT_SOLENOID);
+    // gyro = new ADXRS450_Gyro();
 
-    turnController = new PID(TURN_KP, TURN_KI, TURN_KD, 2.0, gyro, dualMotorControllers);
+    // PID drive linearizers
+    // leftDriveLinearizer = new CANPIDController(leftDriveMaster);
+    // rightDriveLinearizer = new CANPIDController(rightDriveMaster);
+
+    // leftDriveLinearizer.setP(LEFT_LINEAR_KP);
+    // leftDriveLinearizer.setI(LEFT_LINEAR_KI);
+    // rightDriveLinearizer.setP(RIGHT_LINEAR_KP);
+    // rightDriveLinearizer.setI(RIGHT_LINEAR_KI);
+
+    // turnController = new PID(TURN_KP, TURN_KI, TURN_KD, 2.0, gyro,
+    // dualMotorControllers);
 
     // 80 in/sec^2 arbitrary accel value to avoid syntax error
-    leftDriveController = new MotionProfile(DRIVETRAIN_KP, DRIVETRAIN_KI, DRIVETRAIN_KV, DRIVETRAIN_KA,
+    leftDriveProfiler = new MotionProfile(DRIVETRAIN_KP, DRIVETRAIN_KI, DRIVETRAIN_KV, DRIVETRAIN_KA,
         MAX_HIGH_GEAR_VELOCITY, 80, 2.0, leftDriveEncoder, leftDriveMaster);
-    rightDriveController = new MotionProfile(DRIVETRAIN_KP, DRIVETRAIN_KI, DRIVETRAIN_KV, DRIVETRAIN_KA,
+    rightDriveProfiler = new MotionProfile(DRIVETRAIN_KP, DRIVETRAIN_KI, DRIVETRAIN_KV, DRIVETRAIN_KA,
         MAX_HIGH_GEAR_VELOCITY, 80, 2.0, rightDriveEncoder, rightDriveMaster);
 
     straightPower = 0.0;
@@ -128,7 +145,6 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
   // updates the drivetrain's state with every iteration of teleopPeriodic()
   public void update() {
-    // switch statement controlled by driveState
     switch (driveState) {
     case STOPPED:
 
@@ -138,9 +154,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     case TELEOP_DRIVE:
       automaticGearShift();
       driveSystem.arcadeDrive(straightPower, turnPower);
-      System.out.println("Left Encoder : " + leftDriveEncoder.getPosition());
-      System.out.println("Right Encoder : " + rightDriveEncoder.getPosition());
-      System.out.println("Gyro : " + gyro.getAngle());
+      System.out.println(leftDriveEncoder.getPosition());
+      System.out.println(rightDriveEncoder.getPosition());
       break;
 
     case AUTON_DRIVE:
@@ -158,10 +173,10 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
       break;
 
     case DRIVE_STRAIGHT:
-      leftDriveController.calculate();
-      rightDriveController.calculate();
+      leftDriveProfiler.calculate();
+      rightDriveProfiler.calculate();
 
-      if (leftDriveController.isDone() && rightDriveController.isDone()) {
+      if (leftDriveProfiler.isDone() && rightDriveProfiler.isDone()) {
         driveStraightDone = true;
         driveState = States.STOPPED;
       }
@@ -215,8 +230,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     manualGearShift(false);
 
     driveStraightDone = false;
-    leftDriveController.setSetpoint(setpoint);
-    rightDriveController.setSetpoint(setpoint);
+    leftDriveProfiler.setSetpoint(setpoint);
+    rightDriveProfiler.setSetpoint(setpoint);
     driveState = States.DRIVE_STRAIGHT;
   }
 
@@ -265,10 +280,22 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   }
 
   /**
+   * Converts integrated encoders to the appropriate units of measurement
+   */
+  public void setConversionFactors() {
+    //converts from rotations to distance (inches)
+    leftDriveEncoder.setPositionConversionFactor(WHEEL_DIAMETER * Math.PI);
+    rightDriveEncoder.setPositionConversionFactor(WHEEL_DIAMETER * Math.PI);
+    //converts from RPM to velocity (in/s)
+    leftDriveEncoder.setVelocityConversionFactor((WHEEL_DIAMETER * Math.PI) / 60.0);
+    rightDriveEncoder.setVelocityConversionFactor((WHEEL_DIAMETER * Math.PI) / 60.0);
+  }
+
+  /**
    * Resets the DT's encoders and gyros
    */
   public void resetAllSensors() {
-    gyro.reset();
+    //gyro.reset();
   }
 
   public DifferentialDrive getRobotDrive() {
@@ -289,6 +316,4 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     // setDefaultCommand(new MySpecialCommand());
   }
 
-
-  
 }

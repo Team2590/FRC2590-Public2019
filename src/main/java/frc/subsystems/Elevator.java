@@ -8,6 +8,7 @@
 package frc.subsystems;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.command.Subsystem;
@@ -54,13 +55,17 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
   private double setpoint;
 
   public Elevator() {
-    // the elevator motor is connected to a 775, hence it is brushed
-    elevatorMotor = new CANSparkMax(ELEVATOR_MOTOR, MotorType.kBrushed);
-    elevatorEncoder = new NemesisCANEncoder(elevatorMotor);
-    failSafeEncoder = new NemesisCANEncoder(elevatorMotor);
+    // elevatorMotor = new CANSparkMax(ELEVATOR_MOTOR, MotorType.kBrushless);
+    // elevatorEncoder = new NemesisCANEncoder(elevatorMotor);
+    // failSafeEncoder = new NemesisCANEncoder(elevatorMotor);
 
-    elevatorController = new MotionProfile(ELEVATOR_KP, ELEVATOR_KI, ELEVATOR_KV, ELEVATOR_KA, ELEVATOR_MAX_VEL,
-        ELEVATOR_MAX_ACC, ELEVATOR_TOLERANCE, elevatorEncoder, elevatorMotor);
+    // setConversionFactors();
+
+    // elevatorMotor.setIdleMode(IdleMode.kBrake);
+
+    // elevatorController = new MotionProfile(ELEVATOR_KP, ELEVATOR_KI, ELEVATOR_KV,
+    // ELEVATOR_KA, ELEVATOR_MAX_VEL,
+    // ELEVATOR_MAX_ACC, ELEVATOR_TOLERANCE, elevatorEncoder, elevatorMotor);
 
     setpoint = 0.0;
   }
@@ -79,9 +84,8 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
       // calculates motor output and writes to the motor
       elevatorController.calculate();
-
       if (elevatorController.isDone()) {
-        elevatorState = States.STOPPED;
+        stopElevator();
       }
 
       break;
@@ -96,6 +100,23 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     elevatorController.setSetpoint(setpoint);
     this.setpoint = setpoint;
     elevatorState = States.MOVING;
+  }
+
+  public void moveManually(double speed) {
+    elevatorMotor.set(speed);
+    this.setpoint = getHeight();
+  }
+
+  /**
+   * Converts integrated encoders to the appropriate units of measurement
+   */
+  public void setConversionFactors() {
+    // converts from rotations to distance (inches)
+    elevatorEncoder.setPositionConversionFactor(1 / GEAR_RATIO);
+    failSafeEncoder.setPositionConversionFactor(1 / GEAR_RATIO);
+    // converts from RPM to velocity (in/s)
+    elevatorEncoder.setVelocityConversionFactor(1 / (GEAR_RATIO * 60.0));
+    failSafeEncoder.setVelocityConversionFactor(1 / (GEAR_RATIO * 60.0));
   }
 
   public double getHeight() {

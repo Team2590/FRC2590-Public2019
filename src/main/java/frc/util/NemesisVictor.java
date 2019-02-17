@@ -25,4 +25,5 @@ public class NemesisVictor extends VictorSPX implements PIDOutput{
     public void pidWrite(double output) {
 
     }
+
 }
