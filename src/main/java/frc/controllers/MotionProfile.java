@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj.PIDSourceType;
 /**
  * Creates a velocity profile for the system to travel smoothly and accurately
  * 
- * @author Harsh Padhye
+ * @author Harsh Padhye, Dr. Mr. Jeff Keller, PhD.
  */
 public class MotionProfile implements Controller {
 
@@ -107,7 +107,7 @@ public class MotionProfile implements Controller {
         backwards = false;
     }
 
-    public void setSetpoint(double setpoint) {
+    public void setSetpoint(double setpoint) {        
         // gets the current position of the source for feedback control
         double currentPos = getSourceDistance();
 
@@ -129,7 +129,7 @@ public class MotionProfile implements Controller {
         accelDistance = (capMaxVel * capMaxVel) / (2 * maxAcc); // d = v^2 / 2a
         cruiseDistance = travelDistance - 2 * accelDistance;
         if (cruiseDistance < 0) {
-            cruiseDistance = 0; // cruise dist should never be 0
+            cruiseDistance = 0; // cruise dist should never be  < 0
         }
 
         // sets the indices, aka when the profile switches from accel to cruise and
@@ -139,6 +139,9 @@ public class MotionProfile implements Controller {
 
         count = 0; // reset loop counter
         errorSum = 0.0; // reset integrator
+
+        //allows calculate to run
+        done = false;
     }
 
     public void calculate() {
@@ -154,7 +157,7 @@ public class MotionProfile implements Controller {
                 output_acceleration = maxAcc;
                 output_velocity = maxAcc * count * dt;
                 output_position = 0.5 * output_velocity * count * dt; // = 0.5at^2
-
+  
             } else if (count >= i1 && count < i2) { // cruising
                 output_acceleration = 0;
                 output_velocity = capMaxVel;
@@ -167,6 +170,14 @@ public class MotionProfile implements Controller {
                         + 0.5 * (capMaxVel * capMaxVel - output_velocity * output_velocity) / maxAcc;
             }
 
+            // if(backwards) {
+            //     output_acceleration *= -1;
+            //     output_velocity *= -1;
+            // }
+
+            System.out.println("ACC " + output_acceleration);
+            System.out.println("VEL " + output_velocity);
+
             double error = output_position - currentPos;
             errorSum += error * dt;
             double command = kV * output_velocity + kA * output_acceleration + kP * error + kI * errorSum;
@@ -178,13 +189,14 @@ public class MotionProfile implements Controller {
             }
 
             // kV and kA are feedforward, kP and kI are feedback
+            System.out.println("COMMAND " + command);
             output.pidWrite(command);
         }
         output.pidWrite(0.0);
     }
 
     public boolean isDone() {
-        return true;
+        return done;
     }
 
     /**
