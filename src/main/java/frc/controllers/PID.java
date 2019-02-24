@@ -133,8 +133,15 @@ public class PID implements Controller {
         if (done) {
             output.pidWrite(0.0);
         } else {
-            output.pidWrite((kP * error) + (kI * errorSum) + (kD * errorDelta) + headingCompensation()
-                    + turnRateCompensation());
+            double command = (kP * error) + (kI * errorSum) + (kD * errorDelta) + headingCompensation()
+                    + turnRateCompensation();
+            if (command >= 1) {
+                command = 1;
+            } else if (command <= -1) {
+                command = -1;
+            }
+            output.pidWrite(command);
+            System.out.println(command);
         }
     }
 

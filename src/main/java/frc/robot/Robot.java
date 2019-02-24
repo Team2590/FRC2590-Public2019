@@ -6,6 +6,7 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.TimedRobot;
 import frc.looper.Looper;
 import frc.settings.FieldSettings;
@@ -31,6 +32,9 @@ public class Robot extends TimedRobot implements FieldSettings {
   private static Carriage carriage;
   private static Elevator elevator;
 
+  //PDP for current draw purposes
+  private PowerDistributionPanel pdp;
+
   // Limelight camera for vision targeting
   private static Limelight limelight;
 
@@ -49,10 +53,10 @@ public class Robot extends TimedRobot implements FieldSettings {
    */
   @Override
   public void robotInit() {
-    // joysticks
-    leftJoystick = new NemesisJoystick(0);
-    rightJoystick = new NemesisJoystick(1);
-    operatorJoystick = new NemesisJoystick(2);
+    // joysticks, 10% deadbands on X and Y for each
+    leftJoystick = new NemesisJoystick(0, 0.1, 0.1);
+    rightJoystick = new NemesisJoystick(1, 0.1, 0.1);
+    operatorJoystick = new NemesisJoystick(2, 0.1, 0.1);
 
     // instantiate subsystems
     drivetrain = Drivetrain.getDrivetrainInstance();
@@ -60,6 +64,8 @@ public class Robot extends TimedRobot implements FieldSettings {
     cargoIntake = CargoIntake.getCargoIntakeInstance();
     carriage = Carriage.getCarriageInstance();
     elevator = Elevator.getElevatorInstance();
+
+    pdp = new PowerDistributionPanel();
 
     // limelight camera
     limelight = Limelight.getLimelightInstance();
@@ -69,9 +75,9 @@ public class Robot extends TimedRobot implements FieldSettings {
     // add subsystems to the Looper holster
     enabledLooper.register(drivetrain::update);
     enabledLooper.register(hatchIntake::update);
-    enabledLooper.register(cargoIntake::update);
-    // enabledLooper.register(carriage::update);
-    // enabledLooper.register(elevator::update);
+    // enabledLooper.register(cargoIntake::update);
+    enabledLooper.register(carriage::update);
+    enabledLooper.register(elevator::update);
 
     // instantiates compressor
     compressor = new Compressor();
@@ -106,20 +112,26 @@ public class Robot extends TimedRobot implements FieldSettings {
   @Override
   public void teleopInit() {
     enabledLooper.startLoops();
+    drivetrain.resetAllSensors();
+    cargoIntake.holdPosition();
+    carriage.holdPosition();
   }
 
   /**
    * Teleoperated Mode, Driver controls robot
    */
-  @Override
+  @Override 
   public void teleopPeriodic() {
+
+    // System.out.println("PDP :: " + pdp.getCurrent(4));
+    // System.out.println("Carriage :: " + carriage.getAngle());
+    // System.out.println("Cargo Intake :: " + cargoIntake.getAngle());
 
     // This logic checks if the robot is still turning, to avoid switching states to
     // teleop in the middle of the control loop
     // Also prevents driver from moving the robot while it auto aligns
     // if (drivetrain.isTurnDone()) {
-    // inverts Y axis; pushing the joystick forward drives forward
-    drivetrain.teleopDrive(leftJoystick.getY() * 0.75, rightJoystick.getX() * 0.75);
+    drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
     // }
 
     // Auto Align
@@ -131,11 +143,52 @@ public class Robot extends TimedRobot implements FieldSettings {
      * drivetrain.turn(-visionSetpoint); }
      */
 
+    // Runs the cargo intake
+    if (leftJoystick.getRawButton(1)) {
+      cargoIntake.runIntake();
+    } else {
+      cargoIntake.stopIntake();
+    }
+
+    // moves cargo intake to designated setpoints
+    if (rightJoystick.getRisingEdge(1)) {
+      cargoIntake.bottomPosition();
+    } else if (rightJoystick.getRisingEdge(2)) {
+      cargoIntake.topPosition();
+    }
+
+    // Runs the carriage intake
+    if (leftJoystick.getRawButton(2)) {
+      carriage.spinArmWheels(1.0);
+    } else if (leftJoystick.getRawButton(3)) {
+      carriage.spinArmWheels(-1.0);
+    } else {
+      carriage.spinArmWheels(0.0);
+    }
+
+    // swings the carriage
+    if (operatorJoystick.getRisingEdge(4)) {
+      //hatchIntake.drop();
+      carriage.frontPosition();
+    } else if (operatorJoystick.getRisingEdge(5)) {
+      carriage.uprightPosition();
+    } else if(operatorJoystick.getRisingEdge(6)) {
+      carriage.backPosition();
+    }
+
+    // moves the cargo intake manually
+    if (operatorJoystick.getPOV() == 0) {
+      // cargoIntake.moveManually(0.5);
+      carriage.manualSwing(-0.45);
+    } else if (operatorJoystick.getPOV() == 180) {
+      // cargoIntake.moveManually(-0.5);
+      carriage.manualSwing(0.45);
+    }
+
     // Elevator stepoint controls
     if (hatchButtonMode) { // hatch heights
       if (rightJoystick.getRisingEdge(5)) {
         elevator.moveSmooth(ROCKET_LOW_HATCH);
-
       } else if (rightJoystick.getRisingEdge(6)) {
         elevator.moveSmooth(ROCKET_MID_HATCH);
 
@@ -162,7 +215,7 @@ public class Robot extends TimedRobot implements FieldSettings {
 
     // moves the elevator manually using the hat on the joystick
     if (rightJoystick.getPOV() == 0) {
-      elevator.moveManually(0.6);
+      elevator.moveManually(0.5);
     } else if (rightJoystick.getPOV() == 180) {
       elevator.moveManually(-0.3);
     }
@@ -176,21 +229,19 @@ public class Robot extends TimedRobot implements FieldSettings {
 
     // PNEUMATIC TEST
     // lifts and drops hatch dustpan
-    if (operatorJoystick.getRawButton(1)) {
-      hatchIntake.drop();
-    } else {
-      hatchIntake.stow();
+    if (operatorJoystick.getRisingEdge(1)) {
+      hatchIntake.toggleDustpan();
     }
 
-    if (operatorJoystick.getRawButton(3)) {
-      carriage.extendBCV();
-    } else {
-      carriage.retractBCV();
-    }
+    /*
+     * extends the BCV slide piston if (operatorJoystick.getRawButton(3)) {
+     * carriage.extendBCV(); } else { carriage.retractBCV(); }
+     */
 
+    // opens BCV fingers only when arms are open
     if (operatorJoystick.getRawButton(2)) {
       carriage.openArms();
-      if (operatorJoystick.getRawButton(4)) {
+      if (operatorJoystick.getRawButton(3)) {
         carriage.openBCV();
       } else {
         carriage.closeBCV();
@@ -199,26 +250,18 @@ public class Robot extends TimedRobot implements FieldSettings {
       carriage.closeArms();
     }
 
-    if (operatorJoystick.getRawButton(5)) {
-      cargoIntake.runIntake();
-    } else {
-      cargoIntake.stopIntake();
-    }
-
     // Hatch Intake controls for Intaking, Spitting, and Stopping
-    if (operatorJoystick.getRawButton(6)) {
+    if (operatorJoystick.getRawButton(7)) {
       hatchIntake.runIntake();
     } else {
       hatchIntake.stopIntake();
     }
 
-    // NOT NEEDED WITH LOOPER
-    // updates each subsystem at the tail end of each loop
-    // drivetrain.update();
-    // hatchIntake.update();
-    // cargoIntake.update();
-    // elevator.update();
-    // carriage.update();
+  }
+
+  @Override
+  public void disabledPeriodic() {
+    enabledLooper.endLoops();
   }
 
   /**

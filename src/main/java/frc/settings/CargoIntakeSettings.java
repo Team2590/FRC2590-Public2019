@@ -12,13 +12,22 @@ package frc.settings;
  */
 public interface CargoIntakeSettings {
 
-    // Motion Profile Constants
-    public static final double CARGO_INTAKE_KP = 0.0;
+    // Motion Profile / PID Constants
+    public static final double CARGO_INTAKE_KP = 0.075;
     public static final double CARGO_INTAKE_KI = 0.0;
-    public static final double CARGO_INTAKE_KV = 1 / 2675; // 2675 deg/s free speed
-    public static final double CARGO_INTAKE_KA = 0.0;
+    public static final double CARGO_INTAKE_KD = 0.002;
 
-    public static final double CARGO_INTAKE_MAX_VEL = 0.0;
-    public static final double CARGO_INTAKE_MAX_ACC = 0.0;
+    public static final double CARGO_INTAKE_KV = 0.01; // 766.1 deg/s free speed
+    public static final double CARGO_INTAKE_KA = 0.001;
+
+    public static final double CARGO_INTAKE_MAX_VEL = 120.0;
+    public static final double CARGO_INTAKE_MAX_ACC = 480.0;
     public static final double CARGO_INTAKE_TOLERANCE = 0.0;
+
+    public static final double kP_HOLD_CONSTANT = 0.025;
+    public static final double kI_HOLD_CONSTANT = 0.005;
+    public static final double kD_HOLD_CONSTANT = 0.0;
+
+    public static final double TOP_POSITION = 5.0;
+    public static final double BOTTOM_POSITION = 60.0;
 }

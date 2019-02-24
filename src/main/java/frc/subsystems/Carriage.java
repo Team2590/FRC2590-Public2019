@@ -10,17 +10,21 @@ package frc.subsystems;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.controllers.MotionProfile;
 import frc.robot.RobotMap;
 import frc.settings.CarriageSettings;
+import frc.settings.FieldSettings;
 import frc.util.NemesisVictor;
 
 /**
  * Hatch and Cargo manipulating carraige on the elevator
+ * 
+ * @author Harsh Padhye, Ishan Arora
  */
-public class Carriage extends Subsystem implements RobotMap, CarriageSettings {
+public class Carriage extends Subsystem implements RobotMap, CarriageSettings, FieldSettings {
 
   private static Carriage carriageInstance = null;
 
@@ -49,7 +53,9 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings {
 
   private MotionProfile carriageController;
 
-  private int currentPosition;
+  private double setpoint;
+  private double errorSum;
+  private double lastError;
 
   private boolean isOnFront;
   // if the carriage is backwards, and the driver wants to go to hatch mode, the
@@ -62,27 +68,60 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings {
     bcvExtender = new Solenoid(BCV_EXTENDER_SOLENOID);
     armPiston = new Solenoid(ARM_SOLENOID);
 
-    // leftMotor = new NemesisVictor(LEFT_CARRIAGE_MOTOR);
-    // rightMotor = new NemesisVictor(RIGHT_CARRIAGE_MOTOR);
-    // swingMotor = new NemesisVictor(SWING_CARRIAGE_MOTOR);
+    leftMotor = new NemesisVictor(LEFT_CARRIAGE_MOTOR);
+    rightMotor = new NemesisVictor(RIGHT_CARRIAGE_MOTOR);
+    swingMotor = new NemesisVictor(SWING_CARRIAGE_MOTOR);
 
-    // carriagePot = new AnalogPotentiometer(CARRIAGE_POTENTIOMETER);
+    rightMotor.setInverted(true);
+    swingMotor.setInverted(true);
 
-    // carriageController = new MotionProfile(CARRIAGE_KP, CARRIAGE_KI, CARRIAGE_KV,
-    // CARRIAGE_KA, CARRIAGE_MAX_VEL,
-    // CARRIAGE_MAX_ACC, CARRIAGE_TOLERANCE, carriageAccelerometer, swingMotor);
+    carriagePot = new AnalogPotentiometer(CARRIAGE_POTENTIOMETER, 360.0);
+    carriagePot.setName("Carriage Potentiometer");
 
-    currentPosition = 0;
-    // isOnFront = false; // starts backwards in frame perimeter
-    // moveToHatchMode = false;
+    carriageController = new MotionProfile(CARRIAGE_KP, CARRIAGE_KI, CARRIAGE_KV, CARRIAGE_KA, CARRIAGE_MAX_VEL,
+        CARRIAGE_MAX_ACC, CARRIAGE_TOLERANCE, carriagePot, swingMotor);
+
+    setpoint = getAngle(); // should be set to getAngle(), set to 180 for testing purposes
+
+    errorSum = 0.0;
+    lastError = 0.0;
+
+    isOnFront = false; // starts backwards in frame perimeter
+    moveToHatchMode = false;
 
   }
 
   public void update() {
+
     switch (carriageState) {
+
     case STOPPED:
-      setSpeeds(0, 0);
-      swingMotor.set(ControlMode.PercentOutput, 0.0);
+      carriageController.endProfile();
+      double error = setpoint - getAngle();
+      double deltaError = error - lastError;
+      double command = 0.0;
+
+      if (setpoint > 100) {
+        // carriage is help in place in the from position, requires PID controller
+        errorSum += error * REFRESH_RATE;
+        command = error * kP_HOLD_CONSTANT + errorSum * kI_HOLD_CONSTANT + deltaError * kD_HOLD_CONSTANT;
+        lastError = error;
+
+      } else if (setpoint < 80) {
+        // turns the controller off when on the hard stop
+        command = 0.0;
+        errorSum = 0.0;
+        lastError = 0.0;
+
+      } else {
+        // the setpoint is around 90 deg, so the carriage acts as an inverted pendulum
+        // only requires P and D gains to stabilize
+        errorSum = error * REFRESH_RATE;
+        command = error * kP_HOLD_CONSTANT + errorSum * kI_HOLD_CONSTANT + deltaError * kD_HOLD_CONSTANT;
+        lastError = error;
+      }
+
+      swingMotor.set(ControlMode.PercentOutput, command);
       break;
 
     case MOVING:
@@ -90,18 +129,14 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings {
       closeArms();
       closeBCV();
       retractBCV();
+      setSpeeds(0.0, 0.0);
 
       // moves the carriage to desired setpoint via motion profiling
       carriageController.calculate();
 
       // checks if the controller is done
-      // and which mode to engage (hatch, cargo, stopped)
       if (carriageController.isDone()) {
-        if (moveToHatchMode) {
-          carriageState = States.HATCH_MODE;
-        } else {
-          carriageState = States.STOPPED;
-        }
+        carriageState = States.STOPPED;
       }
       break;
 
@@ -112,19 +147,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings {
       break;
 
     case HATCH_MODE:
-      // a button click engages hatch mode
-      // the following logic takes determines if the carriage is currently in the
-      // front or the back and moves the carriage/opens the arms accordingly
-      // carriage cannot swing through elevator with open arms
-      if (getCurrentOrientation() == 1) {
-        // opens the arms to make space for hatch panel
-        openArms();
-        moveToHatchMode = false;
-      } else {
-        // moves carriage to front, automatically engages hatch mode afterwards
-        moveToHatchMode = true;
-        swingCarriage(1);
-      }
+      openArms();
       break;
 
     default:
@@ -148,27 +171,79 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings {
   /**
    * Moves the carriage back and forth through the elevator
    * 
-   * @param position 0 : Back Position of carriage
-   * @param position 1 : Front Position of carriage
-   * @param position 2 : Hatch handoff position of carriage
+   * @param setpoint the desired position of the carriage
    */
-  public void swingCarriage(int position) {
-    if (position == 2) {
-      carriageController.setSetpoint(HATCH_HANDOFF_POSITION);
-      currentPosition = 2;
-    } else if (position == 1) {
-      carriageController.setSetpoint(FRONT_POSITION);
-      currentPosition = 1;
-    } else {
-      carriageController.setSetpoint(BACK_POSITION);
-      currentPosition = 0; 
-    }
+  public void swingCarriage(double setpoint) {
+    carriageController.setSetpoint(setpoint);
+    this.setpoint = setpoint;
+    this.errorSum = 0.0;
+    this.lastError = 0.0;
     carriageState = States.MOVING;
   }
 
   /**
-   * Opens the BCV finger to grab the hatch
-   * Can only extend when arms are open
+   * Flips the carriage to the back position
+   */
+  public void backPosition() {
+    swingCarriage(BACK_POSITION);
+  }
+
+  /**
+   * Flips the carriage to the front position
+   */
+  public void frontPosition() {
+    swingCarriage(FRONT_POSITION);
+  }
+
+  /**
+   * Flips the carriage the hatch-handoff position This is tilted downwards from
+   * the front position
+   */
+  public void hatchHandoffPosition() {
+    swingCarriage(HATCH_HANDOFF_POSITION);
+  }
+
+  /**
+   * Flips the carriage to the upright position The carriage acts as an inverted
+   * pendulum
+   */
+  public void uprightPosition() {
+    swingCarriage(UPRIGHT_POSITION);
+  }
+
+  /**
+   * spins both carriage intake wheels
+   * 
+   * @param speed The power at which to run the motors [-1,1]
+   */
+  public void spinArmWheels(double speed) {
+    setSpeeds(speed, speed);
+  }
+
+  /**
+   * Moves the carriage manually
+   * 
+   * @param speed The power at which to move the carriage [-1,1]
+   */
+  public void manualSwing(double speed) {
+    swingMotor.set(ControlMode.PercentOutput, speed);
+    setpoint = getAngle();
+  }
+
+  /**
+   * Sets the current position of the carriage based on the potentiometer Used to
+   * determine whether it is safe to open carriage arms or raise the elevator
+   */
+  public void checkPosition() {
+    if (carriagePot.get() > 100) {
+      isOnFront = true;
+    } else {
+      isOnFront = false;
+    }
+  }
+
+  /**
+   * Opens the BCV finger to grab the hatch Can only extend when arms are open
    */
   public void openBCV() {
     bcvFingers.set(true);
@@ -199,27 +274,37 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings {
    * Opens the intake arms to create space for the hatch
    */
   public void openArms() {
-    armPiston.set(false);
+    armPiston.set(true);
   }
 
   /**
    * Closes intake arms to grip the cargo
    */
   public void closeArms() {
-    armPiston.set(true);
+    armPiston.set(false);
+  }
+
+  public void holdPosition() {
+    carriageController.endProfile();
+    carriageState = States.STOPPED;
   }
 
   /**
-   * Calculates whether the carriage is on the front side of the elevator based on
-   * potentiometer values
-   * 
-   * @return true if the carriage is on the front side
+   * @return The current angle of the carriage (back 0, front 180)
    */
-  public int getCurrentOrientation() {
-    int orientation = 1;
-    // do the pot calculation here
-    isOnFront = true; // subject tto change based on calcs
-    return orientation;
+  public double getAngle() {
+    return carriagePot.get();
+  }
+
+  /**
+   * REMOVE THIS METHOD AFTER TUNING IS FINISHED
+   * 
+   * @param setpoint
+   */
+  public void setCarriageSetpoint(double setpoint) {
+    this.setpoint = setpoint;
+    errorSum = 0.0;
+    lastError = 0.0;
   }
 
   @Override

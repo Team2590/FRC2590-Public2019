@@ -7,6 +7,7 @@
 
 package frc.util;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.PIDOutput;
@@ -23,7 +24,7 @@ public class NemesisVictor extends VictorSPX implements PIDOutput{
 
     @Override
     public void pidWrite(double output) {
-
+        set(ControlMode.PercentOutput, output);
     }
 
 }

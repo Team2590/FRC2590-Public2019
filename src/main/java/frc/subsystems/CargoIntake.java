@@ -8,18 +8,22 @@
 package frc.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.command.Subsystem;
-import frc.controllers.MotionProfile;
+import frc.controllers.PID;
 import frc.robot.RobotMap;
 import frc.settings.CargoIntakeSettings;
+import frc.settings.FieldSettings;
 import frc.util.NemesisVictor;
 
 /**
  * Intakes the cargo (playground balls) from the floor
+ * 
+ * @author Harsh Padhye, Aditya Ganesh
  */
-public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSettings {
+public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSettings, FieldSettings {
 
   // new singleton
   private static CargoIntake cargoInstance = null;
@@ -34,76 +38,120 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
   private States cargoState = States.STOPPED;
 
   private enum States {
-    STOPPED, MOVING, INTAKE, OUTTAKE
+    STOPPED, MOVING
   }
 
   private NemesisVictor cargoIntakeMotor;
   private NemesisVictor cargoArticulateMotor;
   private AnalogPotentiometer cargoPot;
-  private MotionProfile cargoArticulateController;
+  // private MotionProfile cargoArticulateController;
+  private PID cargoArticulateController;
+
+  private double setpoint;
+  private double errorSum;
+  private double lastError;
 
   public CargoIntake() {
     cargoIntakeMotor = new NemesisVictor(CARGO_INTAKE);
-    // cargoArticulateMotor = new NemesisVictor(CARGO_ARTICULATOR);
-    // cargoPot = new AnalogPotentiometer(CARGO_POTENTIOMETER);
+    cargoArticulateMotor = new NemesisVictor(CARGO_ARTICULATOR);
+    cargoPot = new AnalogPotentiometer(CARGO_POTENTIOMETER, 360.0);
+
+    cargoIntakeMotor.setNeutralMode(NeutralMode.Brake);
+    cargoArticulateMotor.setNeutralMode(NeutralMode.Brake);
+
     // cargoArticulateController = new MotionProfile(CARGO_INTAKE_KP,
-    // CARGO_INTAKE_KI,
-    // CARGO_INTAKE_KV, CARGO_INTAKE_KA,
+    // CARGO_INTAKE_KI, CARGO_INTAKE_KV, CARGO_INTAKE_KA,
     // CARGO_INTAKE_MAX_VEL, CARGO_INTAKE_MAX_ACC, CARGO_INTAKE_TOLERANCE, cargoPot,
     // cargoArticulateMotor);
+    cargoArticulateController = new PID(CARGO_INTAKE_KP, CARGO_INTAKE_KI, CARGO_INTAKE_KD, 2.0, cargoPot,
+        cargoArticulateMotor);
+
+    setpoint = 30.0; // should be getAngle(), botPos for testing
+
+    errorSum = 0.0;
+    lastError = 0.0;
   }
 
   public void update() {
+
     switch (cargoState) {
     case STOPPED:
-      cargoIntakeMotor.set(ControlMode.PercentOutput, 0.0);
+      double error = setpoint - getAngle();
+      double command = 0.0;
+      errorSum += error * REFRESH_RATE;
+      double deltaError = error - lastError;
+      // adds the error terms
+      command = error * kP_HOLD_CONSTANT + errorSum * kI_HOLD_CONSTANT + deltaError * kD_HOLD_CONSTANT;
+
+      lastError = error;
+
+      cargoArticulateMotor.set(ControlMode.PercentOutput, command);
       break;
 
     case MOVING:
-      //stops intake wheels from spinning while the arm is moving
-      cargoIntakeMotor.set(ControlMode.PercentOutput, 0.0);
-
-      //moves arm via motion profiling
-      cargoArticulateController.calculate();
-      if (cargoArticulateController.isDone()) {
-        cargoState = States.STOPPED;
-      }
-      break;
-
-    case INTAKE:
-      cargoIntakeMotor.set(ControlMode.PercentOutput, 1.0);
-      break;
-
-    case OUTTAKE:
-      cargoIntakeMotor.set(ControlMode.PercentOutput, -1.0);
+      // stops intake wheels from spinning while the arm is moving
+      /*
+       * cargoIntakeMotor.set(ControlMode.PercentOutput, 0.0);
+       * 
+       * // moves arm via motion profiling cargoArticulateController.calculate(); if
+       * (cargoArticulateController.isDone()) {
+       * System.out.println("within tolerance"); cargoState = States.STOPPED; }
+       */
       break;
 
     default:
-      cargoIntakeMotor.set(ControlMode.PercentOutput, 0.0);
       System.out.println("Cargo Intake Default State");
       break;
     }
   }
 
   public void runIntake() {
-    cargoState = States.INTAKE;
+    cargoIntakeMotor.set(ControlMode.PercentOutput, 0.5);
   }
 
   public void stopIntake() {
-    cargoState = States.STOPPED;
+    cargoIntakeMotor.set(ControlMode.PercentOutput, 0.0);
   }
 
   public void reverseIntake() {
-    cargoState = States.OUTTAKE;
+    cargoIntakeMotor.set(ControlMode.PercentOutput, -0.5);
+  }
+
+  public void moveManually(double speed) {
+    cargoArticulateMotor.set(ControlMode.PercentOutput, speed);
   }
 
   public void moveCargoIntake(double setpoint) {
     cargoArticulateController.setSetpoint(setpoint);
+    this.setpoint = setpoint;
     cargoState = States.MOVING;
   }
 
-  public double getPosition() {
+  public void bottomPosition() {
+    moveCargoIntake(BOTTOM_POSITION);
+  }
+
+  public void topPosition() {
+    moveCargoIntake(TOP_POSITION);
+  }
+
+  public void holdPosition() {
+    cargoState = States.STOPPED;
+  }
+
+  public double getAngle() {
     return cargoPot.get();
+  }
+
+  /**
+   * REMOVE THIS METHOD AFTER TUNING IS FINISHED
+   * 
+   * @param setpoint
+   */
+  public void setCargoSetpoint(double setpoint) {
+    this.setpoint = setpoint;
+    errorSum = 0.0;
+    lastError = 0.0;
   }
 
   @Override

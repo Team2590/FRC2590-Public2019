@@ -12,6 +12,7 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.command.Subsystem;
+import frc.controllers.ConstantCurrent;
 import frc.controllers.MotionProfile;
 import frc.robot.RobotMap;
 import frc.settings.ElevatorSettings;
@@ -20,7 +21,7 @@ import frc.util.NemesisCANEncoder;
 /**
  * Moves the Cargo and Hatch Panels to set heights to score points
  * 
- * @author Harsh Padhye, Chinmay Savanur
+ * @author Harsh Padhye, Rohan Bhatnagar
  */
 public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
@@ -51,41 +52,61 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
   // Motion profile controller to move elevator smoothly and accurately
   private MotionProfile elevatorController;
 
+  private ConstantCurrent manualController;
+
   // setpoint to hold carriage in place after moving
   private double setpoint;
 
+  private boolean manual;
+
   public Elevator() {
-    // elevatorMotor = new CANSparkMax(ELEVATOR_MOTOR, MotorType.kBrushless);
-    // elevatorEncoder = new NemesisCANEncoder(elevatorMotor);
-    // failSafeEncoder = new NemesisCANEncoder(elevatorMotor);
+    elevatorMotor = new CANSparkMax(ELEVATOR_MOTOR, MotorType.kBrushless);
+    elevatorEncoder = new NemesisCANEncoder(elevatorMotor);
+    failSafeEncoder = new NemesisCANEncoder(elevatorMotor);
 
-    // setConversionFactors();
+    setConversionFactors();
 
-    // elevatorMotor.setIdleMode(IdleMode.kBrake);
+    elevatorMotor.setIdleMode(IdleMode.kBrake);
 
-    // elevatorController = new MotionProfile(ELEVATOR_KP, ELEVATOR_KI, ELEVATOR_KV,
-    // ELEVATOR_KA, ELEVATOR_MAX_VEL,
-    // ELEVATOR_MAX_ACC, ELEVATOR_TOLERANCE, elevatorEncoder, elevatorMotor);
+    elevatorController = new MotionProfile(ELEVATOR_KP, ELEVATOR_KI, ELEVATOR_KV, ELEVATOR_KA, ELEVATOR_MAX_VEL,
+        ELEVATOR_MAX_ACC, ELEVATOR_TOLERANCE, elevatorEncoder, elevatorMotor);
+
+    manualController = new ConstantCurrent(elevatorMotor);
 
     setpoint = 0.0;
+
+    manual = false;
   }
 
   // called every loop of teleop periodic
   public void update() {
+
+    //System.out.println("elevator " + getHeight());
     switch (elevatorState) {
     case STOPPED:
+      // proportional error calcualtion
+      double power = (setpoint - getHeight()) * ELEVATOR_HOLD_CONSTANT;
+      if (getHeight() < 5) {
+        power = 0.0;
+      }
 
-      double error = setpoint - getHeight();
-      elevatorMotor.set(error * ELEVATOR_HOLD_CONSTANT);
+      elevatorMotor.set(power);
 
       break;
 
     case MOVING:
 
-      // calculates motor output and writes to the motor
-      elevatorController.calculate();
-      if (elevatorController.isDone()) {
-        stopElevator();
+      if (manual) {
+        this.setpoint = getHeight();
+        manualController.calculate();
+        if (manualController.isDone()) {
+          stopElevator();
+        }
+      } else {
+        elevatorController.calculate();
+        if (elevatorController.isDone()) {
+          stopElevator();
+        }
       }
 
       break;
@@ -94,17 +115,20 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
       System.out.println("Elevator Default State");
       break;
     }
+
   }
 
   public void moveSmooth(double setpoint) {
+    manual = false;
     elevatorController.setSetpoint(setpoint);
     this.setpoint = setpoint;
     elevatorState = States.MOVING;
   }
 
   public void moveManually(double speed) {
-    elevatorMotor.set(speed);
-    this.setpoint = getHeight();
+    manual = true;
+    manualController.setSetpoint(speed);
+    elevatorState = States.MOVING;
   }
 
   /**
@@ -112,11 +136,12 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
    */
   public void setConversionFactors() {
     // converts from rotations to distance (inches)
-    elevatorEncoder.setPositionConversionFactor(1 / GEAR_RATIO);
-    failSafeEncoder.setPositionConversionFactor(1 / GEAR_RATIO);
+    // Turning shaft diameter is 1 in
+    elevatorEncoder.setPositionConversionFactor(Math.PI / GEAR_RATIO);
+    failSafeEncoder.setPositionConversionFactor(Math.PI / GEAR_RATIO);
     // converts from RPM to velocity (in/s)
-    elevatorEncoder.setVelocityConversionFactor(1 / (GEAR_RATIO * 60.0));
-    failSafeEncoder.setVelocityConversionFactor(1 / (GEAR_RATIO * 60.0));
+    elevatorEncoder.setVelocityConversionFactor(Math.PI / (GEAR_RATIO * 60.0));
+    failSafeEncoder.setVelocityConversionFactor(Math.PI / (GEAR_RATIO * 60.0));
   }
 
   public double getHeight() {

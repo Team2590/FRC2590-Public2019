@@ -61,7 +61,8 @@ public class Looper {
   /**
    * Ends the loops
    */
-  public void onEnd() {
+  public void endLoops() {
     running = false;
+    notifier.stop();
   }
 }

@@ -10,6 +10,8 @@ import frc.util.NemesisVictor;
 
 /**
  * Grabs the hatch panel from the floor
+ * 
+ * @author Harsh Padhye, Aditya Ganesh
  */
 public class HatchIntake extends Subsystem implements RobotMap, HatchIntakeSettings {
 
@@ -31,10 +33,12 @@ public class HatchIntake extends Subsystem implements RobotMap, HatchIntakeSetti
 
   private Solenoid intakePiston;
   private NemesisVictor hatchIntakeMotor;
+  private boolean dustpanPosition;
 
   public HatchIntake() {
-   intakePiston = new Solenoid(INTAKE_SOLENOID);
-   hatchIntakeMotor = new NemesisVictor(HATCH_INTAKE);
+    intakePiston = new Solenoid(INTAKE_SOLENOID);
+    hatchIntakeMotor = new NemesisVictor(HATCH_INTAKE);
+    dustpanPosition = false; //naturally stowed
   }
 
   public void update() {
@@ -69,11 +73,18 @@ public class HatchIntake extends Subsystem implements RobotMap, HatchIntakeSetti
     hatchState = States.OUTTAKE;
   }
 
+  public void toggleDustpan() {
+    dustpanPosition = !dustpanPosition;
+    intakePiston.set(dustpanPosition);
+  }
+
   public void stow() {
+    dustpanPosition = false;
     intakePiston.set(false);
   }
 
   public void drop() {
+    dustpanPosition = true;
     intakePiston.set(true);
   }
 

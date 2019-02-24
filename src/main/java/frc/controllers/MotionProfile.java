@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.PIDSourceType;
  */
 public class MotionProfile implements Controller {
 
+    // Profile gains
     private double kP;
     private double kI;
     private double kV;
@@ -30,19 +31,19 @@ public class MotionProfile implements Controller {
     private PIDSource source;
     private PIDOutput output;
 
-    // end points and tolerance of the profile
+    // start and end points and tolerance of the profile
     private double endPoint;
+    private double startPoint;
     private double tolerance;
 
     // termination of the controller
     private boolean done;
 
-    // cruising section of profile
-    private double travelDistance;
+    // adjusted max velocity of profile
     private double capMaxVel;
 
-    // acceleration distance (ends of the profile)
-    // cruise distance (middle of profile)
+    // distances of profile and segments
+    private double travelDistance;
     private double accelDistance;
     private double cruiseDistance;
 
@@ -57,8 +58,8 @@ public class MotionProfile implements Controller {
     // estimated total time to follow the profile
     private double totalTime;
 
-    // whether the profile is read forwards or backwards
-    private boolean backwards;
+    // direction of the path (1 forwards, -1 backwards)
+    private int dir;
 
     /**
      * Motion Profile Controller allows for smooth and accurate path following
@@ -90,6 +91,7 @@ public class MotionProfile implements Controller {
         done = true;
 
         endPoint = 0.0;
+        startPoint = 0.0;
         travelDistance = 0.0;
         capMaxVel = maxVel;
 
@@ -104,19 +106,24 @@ public class MotionProfile implements Controller {
 
         totalTime = 0.0;
 
-        backwards = false;
+        dir = 1;
     }
 
-    public void setSetpoint(double setpoint) {        
+    /**
+     * Sets the desired position of the profile
+     * 
+     * @param setpoint The desired position of the profile
+     */
+    public void setSetpoint(double setpoint) {
         // gets the current position of the source for feedback control
-        double currentPos = getSourceDistance();
+        startPoint = getSourceDistance();
 
         // sets the endpoint as the desired setpoint
         endPoint = setpoint;
 
         // calculates path direction and distance
-        backwards = (currentPos > setpoint);
-        travelDistance = Math.abs(setpoint - currentPos);
+        dir = (startPoint > setpoint) ? -1 : 1;
+        travelDistance = Math.abs(setpoint - startPoint);
 
         // Determines the fastest velocity the system will travel
         // Essentially, the max vel is capped by the system's capabilities
@@ -129,7 +136,7 @@ public class MotionProfile implements Controller {
         accelDistance = (capMaxVel * capMaxVel) / (2 * maxAcc); // d = v^2 / 2a
         cruiseDistance = travelDistance - 2 * accelDistance;
         if (cruiseDistance < 0) {
-            cruiseDistance = 0; // cruise dist should never be  < 0
+            cruiseDistance = 0; // cruise dist should never be < 0
         }
 
         // sets the indices, aka when the profile switches from accel to cruise and
@@ -140,10 +147,13 @@ public class MotionProfile implements Controller {
         count = 0; // reset loop counter
         errorSum = 0.0; // reset integrator
 
-        //allows calculate to run
+        // allows calculate to run
         done = false;
     }
 
+    /**
+     * Calculates the outputs of the profile and writes to the motor automatically
+     */
     public void calculate() {
         if (!done) {
             double currentPos = getSourceDistance();
@@ -153,33 +163,28 @@ public class MotionProfile implements Controller {
 
             count++; // counter for the number of iterated timesteps
 
+            // multiplying by "dir" accounts for the direction of the profile
             if (count < i1) { // accelerating
-                output_acceleration = maxAcc;
-                output_velocity = maxAcc * count * dt;
-                output_position = 0.5 * output_velocity * count * dt; // = 0.5at^2
-  
-            } else if (count >= i1 && count < i2) { // cruising
+                output_acceleration = maxAcc * dir;
+                output_velocity = output_acceleration * count * dt;
+                output_position = startPoint + 0.5 * output_velocity * count * dt; // = 0.5at^2
+
+            } else if (count >= i1 && count <= i2) { // cruising
                 output_acceleration = 0;
-                output_velocity = capMaxVel;
-                output_position = accelDistance + capMaxVel * (count - i1) * dt;
+                output_velocity = capMaxVel * dir;
+                output_position = startPoint + (accelDistance * dir) + output_velocity * (count - i1) * dt;
 
             } else if (count > i2) { // decelerating
-                output_acceleration = -maxAcc;
-                output_velocity = capMaxVel - maxAcc * (count - i2) * dt;
-                output_position = (travelDistance - accelDistance)
-                        + 0.5 * (capMaxVel * capMaxVel - output_velocity * output_velocity) / maxAcc;
+                output_acceleration = -maxAcc * dir;
+                output_velocity = (capMaxVel - maxAcc * (count - i2) * dt) * dir;
+                output_position = startPoint + (travelDistance - accelDistance) * dir
+                        + 0.5 * (capMaxVel * capMaxVel - output_velocity * output_velocity) / maxAcc * dir;
             }
-
-            // if(backwards) {
-            //     output_acceleration *= -1;
-            //     output_velocity *= -1;
-            // }
-
-            System.out.println("ACC " + output_acceleration);
-            System.out.println("VEL " + output_velocity);
 
             double error = output_position - currentPos;
             errorSum += error * dt;
+
+            // kV and kA are feedforward, kP and kI are feedback
             double command = kV * output_velocity + kA * output_acceleration + kP * error + kI * errorSum;
 
             // profile is finished, output 0.0 to motors and exit
@@ -188,15 +193,27 @@ public class MotionProfile implements Controller {
                 command = 0.0;
             }
 
-            // kV and kA are feedforward, kP and kI are feedback
-            System.out.println("COMMAND " + command);
+            System.out.println(
+                    count * 0.02 + " " + output_position + " " + currentPos + " " + output_velocity + " " + command);
             output.pidWrite(command);
         }
-        output.pidWrite(0.0);
     }
 
+    /**
+     * @return Whether or not the profile has finished
+     */
     public boolean isDone() {
         return done;
+    }
+
+    /**
+     * Ends the controller and resets the iteration steps
+     */
+    public void endProfile() {
+        count = 0;
+        i1 = 0;
+        i2 = 0;
+        done = true;
     }
 
     /**

@@ -21,12 +21,13 @@ import frc.controllers.PID;
 import frc.robot.RobotMap;
 import frc.settings.DrivetrainSettings;
 import frc.util.NemesisCANEncoder;
+import frc.util.NemesisDrive;
 import frc.util.NemesisMultiMC;
 
 /**
  * Drivetrain Class for the 2019 Robot
  * 
- * @author Harsh Padhye
+ * @author Harsh Padhye, Ritika Bhatnagar
  */
 public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSettings {
 
@@ -48,7 +49,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   }
 
   // allows us to drive the robot via arcade drive
-  private DifferentialDrive driveSystem;
+  private NemesisDrive driveSystem;
 
   // motor controllers for the DT, set up in master/slave fashion
   // motor controllers closer to the front of the robot are masters
@@ -96,6 +97,9 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     rightDriveMaster = new CANSparkMax(RIGHT_DRIVE_MASTER, MotorType.kBrushless);
     rightDriveSlave = new CANSparkMax(RIGHT_DRIVE_SLAVE, MotorType.kBrushless);
 
+    leftDriveMaster.setInverted(true);
+    leftDriveSlave.setInverted(true);
+
     // set the slave controllers to follow their respective masters(same side)
     leftDriveSlave.follow(leftDriveMaster);
     rightDriveSlave.follow(rightDriveMaster);
@@ -104,15 +108,13 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     leftDriveEncoder = new NemesisCANEncoder(leftDriveMaster);
     rightDriveEncoder = new NemesisCANEncoder(rightDriveMaster);
 
-    leftDriveEncoder.setReverseDirection(true);
-
-    //converts units of encoders
+    // converts units of encoders
     setConversionFactors();
 
     // sets the drive motors to coast when neutral
     setDriveIdleModes(IdleMode.kCoast);
 
-    driveSystem = new DifferentialDrive(leftDriveMaster, rightDriveMaster);
+    driveSystem = new NemesisDrive();
     dualMotorControllers = new NemesisMultiMC(leftDriveMaster, rightDriveMaster);
 
     shiftingPiston = new Solenoid(GEAR_SHIFT_SOLENOID);
@@ -147,15 +149,15 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   public void update() {
     switch (driveState) {
     case STOPPED:
-
       setSpeeds(0, 0);
       break;
 
     case TELEOP_DRIVE:
       automaticGearShift();
-      driveSystem.arcadeDrive(straightPower, turnPower);
-      System.out.println(leftDriveEncoder.getPosition());
-      System.out.println(rightDriveEncoder.getPosition());
+      //arcade drive
+      double out[] = driveSystem.calculate(straightPower, turnPower);
+      setSpeeds(out[0], out[1]);
+       
       break;
 
     case AUTON_DRIVE:
@@ -169,7 +171,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
       if (turnController.isDone()) {
         turnDone = true;
         driveState = States.STOPPED;
-      }
+      } 
       break;
 
     case DRIVE_STRAIGHT:
@@ -205,7 +207,6 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   public void teleopDrive(double straight, double turn) {
     straightPower = straight;
     turnPower = turn;
-
     driveState = States.TELEOP_DRIVE;
   }
 
@@ -254,17 +255,17 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     // averages the two sides to find center speed
     double robotSpeed = (leftDriveEncoder.getVelocity() + rightDriveEncoder.getVelocity()) / 2;
 
-    shiftingPiston.set(robotSpeed < MAX_LOW_GEAR_VELOCITY); // convert from ft/s to in/s
+    shiftingPiston.set(robotSpeed > MAX_LOW_GEAR_VELOCITY); 
   }
 
   /**
    * Forces drivetrain to desired gear
    * 
-   * @param isLowGear true if the robot should be in low gear, false if the robot
-   *                  should be in high gear
+   * @param isHighGear true if the robot should be in high gear, false if the
+   *                   robot should be in low gear
    */
-  public void manualGearShift(boolean isLowGear) {
-    shiftingPiston.set(isLowGear);
+  public void manualGearShift(boolean isHighGear) {
+    shiftingPiston.set(isHighGear);
   }
 
   /**
@@ -283,22 +284,24 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
    * Converts integrated encoders to the appropriate units of measurement
    */
   public void setConversionFactors() {
-    //converts from rotations to distance (inches)
-    leftDriveEncoder.setPositionConversionFactor(WHEEL_DIAMETER * Math.PI);
-    rightDriveEncoder.setPositionConversionFactor(WHEEL_DIAMETER * Math.PI);
-    //converts from RPM to velocity (in/s)
-    leftDriveEncoder.setVelocityConversionFactor((WHEEL_DIAMETER * Math.PI) / 60.0);
-    rightDriveEncoder.setVelocityConversionFactor((WHEEL_DIAMETER * Math.PI) / 60.0);
+    // converts from rotations to distance
+    leftDriveEncoder.setPositionConversionFactor((WHEEL_DIAMETER * Math.PI) / HIGH_GEAR_RATIO);
+    rightDriveEncoder.setPositionConversionFactor((WHEEL_DIAMETER * Math.PI) / HIGH_GEAR_RATIO);
+    // converts from RPM to velocity (in/s)
+    leftDriveEncoder.setVelocityConversionFactor((WHEEL_DIAMETER * Math.PI) / (HIGH_GEAR_RATIO * 60.0));
+    rightDriveEncoder.setVelocityConversionFactor((WHEEL_DIAMETER * Math.PI) / (HIGH_GEAR_RATIO * 60.0));
   }
 
   /**
    * Resets the DT's encoders and gyros
    */
   public void resetAllSensors() {
-    //gyro.reset();
+    // gyro.reset();
+    leftDriveEncoder.setPosition(0.0);
+    rightDriveEncoder.setPosition(0.0);
   }
 
-  public DifferentialDrive getRobotDrive() {
+  public NemesisDrive getRobotDrive() {
     return driveSystem;
   }
 
