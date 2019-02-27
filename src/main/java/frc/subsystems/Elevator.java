@@ -65,6 +65,8 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     failSafeEncoder = new NemesisCANEncoder(elevatorMotor);
 
     setConversionFactors();
+    elevatorEncoder.setScaling(1.13);
+    failSafeEncoder.setScaling(1.13);
 
     elevatorMotor.setIdleMode(IdleMode.kBrake);
 
@@ -81,7 +83,6 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
   // called every loop of teleop periodic
   public void update() {
 
-    //System.out.println("elevator " + getHeight());
     switch (elevatorState) {
     case STOPPED:
       // proportional error calcualtion

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 /**
  * Array of Points that define a cubic hermite spline path
+ * @author Harsh Padhye
  */
 public class Spline {
 

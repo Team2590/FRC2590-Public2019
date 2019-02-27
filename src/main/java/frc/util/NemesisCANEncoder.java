@@ -20,19 +20,33 @@ import edu.wpi.first.wpilibj.PIDSourceType;
 public class NemesisCANEncoder extends CANEncoder implements PIDSource {
 
     private boolean reverseDirection = false;
+    private double scaling = 1.0;
 
     public NemesisCANEncoder(com.revrobotics.CANSparkMax device) {
         super(device);
     }
 
+    public void setScaling(double scaling) {
+        this.scaling = scaling;
+    }
+
     @Override
     public double getPosition() {
-        return super.getPosition() * (reverseDirection ? -1 : 1);
+        return super.getPosition() * (reverseDirection ? -1 : 1) * scaling;
     }
 
     @Override
     public double getVelocity() {
-        return super.getVelocity() * (reverseDirection ? -1 : 1);
+        return super.getVelocity() * (reverseDirection ? -1 : 1) * scaling;
+    }
+
+    @Override
+    public double pidGet() {
+        return getPosition() * scaling;
+    }
+
+    public void setReverseDirection(boolean reverse) {
+        reverseDirection = reverse;
     }
 
     @Override
@@ -43,14 +57,5 @@ public class NemesisCANEncoder extends CANEncoder implements PIDSource {
     @Override
     public PIDSourceType getPIDSourceType() {
         return null;
-    }
-
-    @Override
-    public double pidGet() {
-        return 0.0;
-    }
-
-    public void setReverseDirection(boolean reverse) {
-        reverseDirection = reverse;
     }
 }

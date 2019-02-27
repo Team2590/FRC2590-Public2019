@@ -12,10 +12,11 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.hal.sim.mockdata.EncoderDataJNI;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import frc.controllers.MotionProfile;
 import frc.controllers.PID;
 import frc.robot.RobotMap;
@@ -65,6 +66,10 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   private NemesisCANEncoder leftDriveEncoder;
   private NemesisCANEncoder rightDriveEncoder;
 
+  // encoders for the DT, attached directly to the turning shaft
+  private Encoder leftExternalEnc;
+  private Encoder rightExternalEnc;
+
   // gear shifting piston (low true, high false)
   private Solenoid shiftingPiston;
 
@@ -89,6 +94,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   // accessory variable for the turn/drive straight command to see if the DT has
   // finished its control loop
   private boolean turnDone, driveStraightDone;
+  private boolean isHighGear;
 
   public Drivetrain() {
 
@@ -107,6 +113,9 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     // instantiates drive encoders from their NEO motors
     leftDriveEncoder = new NemesisCANEncoder(leftDriveMaster);
     rightDriveEncoder = new NemesisCANEncoder(rightDriveMaster);
+
+    leftExternalEnc = new Encoder(0, 1);
+    rightExternalEnc = new Encoder(2, 3);
 
     // converts units of encoders
     setConversionFactors();
@@ -143,6 +152,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
     turnDone = true;
     driveStraightDone = true;
+    isHighGear = true;
   }
 
   // updates the drivetrain's state with every iteration of teleopPeriodic()
@@ -153,11 +163,11 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
       break;
 
     case TELEOP_DRIVE:
-      automaticGearShift();
-      //arcade drive
+      // automaticGearShift();
+      // arcade drive
       double out[] = driveSystem.calculate(straightPower, turnPower);
       setSpeeds(out[0], out[1]);
-       
+
       break;
 
     case AUTON_DRIVE:
@@ -171,7 +181,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
       if (turnController.isDone()) {
         turnDone = true;
         driveState = States.STOPPED;
-      } 
+      }
       break;
 
     case DRIVE_STRAIGHT:
@@ -228,7 +238,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
    */
   public void driveStraight(double setpoint) {
     // shifts to high gear
-    manualGearShift(false);
+    manualGearShift(true);
 
     driveStraightDone = false;
     leftDriveProfiler.setSetpoint(setpoint);
@@ -254,8 +264,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   public void automaticGearShift() {
     // averages the two sides to find center speed
     double robotSpeed = (leftDriveEncoder.getVelocity() + rightDriveEncoder.getVelocity()) / 2;
-
-    shiftingPiston.set(robotSpeed > MAX_LOW_GEAR_VELOCITY); 
+    isHighGear = robotSpeed > MAX_LOW_GEAR_VELOCITY;
+    shiftingPiston.set(isHighGear);
   }
 
   /**
@@ -265,7 +275,14 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
    *                   robot should be in low gear
    */
   public void manualGearShift(boolean isHighGear) {
+    this.isHighGear = isHighGear;
     shiftingPiston.set(isHighGear);
+  }
+
+  // toggles between high and low gear
+  public void toggleShift() {
+    isHighGear = !isHighGear;
+    manualGearShift(isHighGear);
   }
 
   /**
@@ -284,12 +301,32 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
    * Converts integrated encoders to the appropriate units of measurement
    */
   public void setConversionFactors() {
+    double circumference = WHEEL_DIAMETER * Math.PI;
     // converts from rotations to distance
-    leftDriveEncoder.setPositionConversionFactor((WHEEL_DIAMETER * Math.PI) / HIGH_GEAR_RATIO);
-    rightDriveEncoder.setPositionConversionFactor((WHEEL_DIAMETER * Math.PI) / HIGH_GEAR_RATIO);
+    leftDriveEncoder.setPositionConversionFactor(circumference / HIGH_GEAR_RATIO);
+    rightDriveEncoder.setPositionConversionFactor(circumference / HIGH_GEAR_RATIO);
     // converts from RPM to velocity (in/s)
-    leftDriveEncoder.setVelocityConversionFactor((WHEEL_DIAMETER * Math.PI) / (HIGH_GEAR_RATIO * 60.0));
-    rightDriveEncoder.setVelocityConversionFactor((WHEEL_DIAMETER * Math.PI) / (HIGH_GEAR_RATIO * 60.0));
+    leftDriveEncoder.setVelocityConversionFactor(circumference / (HIGH_GEAR_RATIO * 60.0));
+    rightDriveEncoder.setVelocityConversionFactor(circumference / (HIGH_GEAR_RATIO * 60.0));
+    // pulses every 1 degree of rotation
+    leftExternalEnc.setDistancePerPulse(circumference / 360.0);
+    rightExternalEnc.setDistancePerPulse(circumference / 360.0);
+  }
+
+  public double getDistanceNEO(boolean left) {
+    if (left) {
+      return leftDriveEncoder.getPosition();
+    } else {
+      return rightDriveEncoder.getPosition();
+    }
+  }
+
+  public double getDistanceQuadEnc(boolean left) {
+    if (left) {
+      return leftExternalEnc.getDistance();
+    } else {
+      return rightExternalEnc.getDistance();
+    }
   }
 
   /**

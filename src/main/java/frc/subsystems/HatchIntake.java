@@ -78,12 +78,12 @@ public class HatchIntake extends Subsystem implements RobotMap, HatchIntakeSetti
     intakePiston.set(dustpanPosition);
   }
 
-  public void stow() {
+  public void stowDustpan() {
     dustpanPosition = false;
     intakePiston.set(false);
   }
 
-  public void drop() {
+  public void dropDustpan() {
     dustpanPosition = true;
     intakePiston.set(true);
   }

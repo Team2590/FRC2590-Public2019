@@ -8,7 +8,8 @@
 package frc.trajectory;
 
 /**
- * Add your docs here.
+ * A point
+ * @author Harsh Padhye
  */
 public class Point {
 

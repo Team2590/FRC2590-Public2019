@@ -204,7 +204,7 @@ public class OldMotionProfile implements Controller {
     }
 
     public boolean isDone() {
-        return true;
+        return done;
     }
 
     public double getSourceDistance() {

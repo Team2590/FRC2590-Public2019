@@ -194,7 +194,7 @@ public class MotionProfile implements Controller {
             }
 
             System.out.println(
-                    count * 0.02 + " " + output_position + " " + currentPos + " " + output_velocity + " " + command);
+                    count * dt + " " + output_position + " " + currentPos + " " + output_velocity + " " + command);
             output.pidWrite(command);
         }
     }

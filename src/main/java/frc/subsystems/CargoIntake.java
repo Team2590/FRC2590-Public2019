@@ -89,14 +89,13 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
       break;
 
     case MOVING:
-      // stops intake wheels from spinning while the arm is moving
-      /*
-       * cargoIntakeMotor.set(ControlMode.PercentOutput, 0.0);
-       * 
-       * // moves arm via motion profiling cargoArticulateController.calculate(); if
-       * (cargoArticulateController.isDone()) {
-       * System.out.println("within tolerance"); cargoState = States.STOPPED; }
-       */
+      // moves arm via motion profiling 
+      cargoArticulateController.calculate();
+      
+      if (cargoArticulateController.isDone()) {
+        cargoState = States.STOPPED;
+      }
+
       break;
 
     default:
@@ -141,17 +140,6 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
 
   public double getAngle() {
     return cargoPot.get();
-  }
-
-  /**
-   * REMOVE THIS METHOD AFTER TUNING IS FINISHED
-   * 
-   * @param setpoint
-   */
-  public void setCargoSetpoint(double setpoint) {
-    this.setpoint = setpoint;
-    errorSum = 0.0;
-    lastError = 0.0;
   }
 
   @Override

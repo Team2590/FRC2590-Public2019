@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj.command.Subsystem;
  * Limelight camera class for vision processing Uses network tables relayed from
  * the camera to track retroreflective targets
  * 
- * @author Harsh Padhye
+ * @author Harsh Padhye, Chinmay Savanur
  * 
  * Access the Limelight web pipeline via: http://10.25.90.11:5801 
  * Access the Limelight camera feed via: http://10.25.90.11:5800

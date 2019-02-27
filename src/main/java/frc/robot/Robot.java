@@ -32,7 +32,7 @@ public class Robot extends TimedRobot implements FieldSettings {
   private static Carriage carriage;
   private static Elevator elevator;
 
-  //PDP for current draw purposes
+  // PDP for current draw purposes
   private PowerDistributionPanel pdp;
 
   // Limelight camera for vision targeting
@@ -120,12 +120,18 @@ public class Robot extends TimedRobot implements FieldSettings {
   /**
    * Teleoperated Mode, Driver controls robot
    */
-  @Override 
+  @Override
   public void teleopPeriodic() {
 
+    /**
+     * Useful print statements for measurement/calibration
+     */
     // System.out.println("PDP :: " + pdp.getCurrent(4));
     // System.out.println("Carriage :: " + carriage.getAngle());
     // System.out.println("Cargo Intake :: " + cargoIntake.getAngle());
+    // System.out.println(elevator.getHeight());
+    System.out.println(drivetrain.getDistanceNEO(true) + " " + drivetrain.getDistanceQuadEnc(true) + " "
+        + drivetrain.getDistanceNEO(false) + " " + drivetrain.getDistanceQuadEnc(false));
 
     // This logic checks if the robot is still turning, to avoid switching states to
     // teleop in the middle of the control loop
@@ -143,118 +149,140 @@ public class Robot extends TimedRobot implements FieldSettings {
      * drivetrain.turn(-visionSetpoint); }
      */
 
-    // Runs the cargo intake
-    if (leftJoystick.getRawButton(1)) {
-      cargoIntake.runIntake();
-    } else {
-      cargoIntake.stopIntake();
+    /**
+     * The following logic is independent of the button mode
+     */
+
+    // manual shifting
+    if (leftJoystick.getRisingEdge(2)) {
+      drivetrain.toggleShift();
     }
 
-    // moves cargo intake to designated setpoints
-    if (rightJoystick.getRisingEdge(1)) {
-      cargoIntake.bottomPosition();
-    } else if (rightJoystick.getRisingEdge(2)) {
-      cargoIntake.topPosition();
+    // drops dustpan and outtakes slowly
+    if (leftJoystick.getRawButton(3)) {
+      hatchIntake.dropDustpan();
+      hatchIntake.reverseIntake();
     }
 
-    // Runs the carriage intake
-    if (leftJoystick.getRawButton(2)) {
-      carriage.spinArmWheels(1.0);
-    } else if (leftJoystick.getRawButton(3)) {
-      carriage.spinArmWheels(-1.0);
-    } else {
-      carriage.spinArmWheels(0.0);
-    }
-
-    // swings the carriage
+    // Operator has the ability to move the carriage
     if (operatorJoystick.getRisingEdge(4)) {
-      //hatchIntake.drop();
+      hatchButtonMode = false;
       carriage.frontPosition();
     } else if (operatorJoystick.getRisingEdge(5)) {
+      hatchButtonMode = false;
       carriage.uprightPosition();
-    } else if(operatorJoystick.getRisingEdge(6)) {
+    } else if (operatorJoystick.getRisingEdge(6)) {
+      hatchButtonMode = false;
       carriage.backPosition();
     }
 
-    // moves the cargo intake manually
-    if (operatorJoystick.getPOV() == 0) {
-      // cargoIntake.moveManually(0.5);
-      carriage.manualSwing(-0.45);
-    } else if (operatorJoystick.getPOV() == 180) {
-      // cargoIntake.moveManually(-0.5);
-      carriage.manualSwing(0.45);
-    }
-
-    // Elevator stepoint controls
-    if (hatchButtonMode) { // hatch heights
-      if (rightJoystick.getRisingEdge(5)) {
-        elevator.moveSmooth(ROCKET_LOW_HATCH);
-      } else if (rightJoystick.getRisingEdge(6)) {
-        elevator.moveSmooth(ROCKET_MID_HATCH);
-
-      } else if (rightJoystick.getRisingEdge(4)) {
-        elevator.moveSmooth(ROCKET_HIGH_HATCH);
-      }
-
-    } else { // cargo ball heights
-      if (rightJoystick.getRisingEdge(5)) {
-        elevator.moveSmooth(ROCKET_LOW_CARGO);
-
-      } else if (rightJoystick.getRisingEdge(6)) {
-        elevator.moveSmooth(ROCKET_MID_CARGO);
-
-      } else if (rightJoystick.getRisingEdge(4)) {
-        elevator.moveSmooth(ROCKET_HIGH_CARGO);
-      }
-
-    }
-    // drops the elevator to ground level, regardless of setpoint mode
-    if (rightJoystick.getRisingEdge(3)) {
-      elevator.moveSmooth(0.0);
-    }
-
-    // moves the elevator manually using the hat on the joystick
-    if (rightJoystick.getPOV() == 0) {
-      elevator.moveManually(0.5);
-    } else if (rightJoystick.getPOV() == 180) {
-      elevator.moveManually(-0.3);
-    }
-
-    // switches between hatch and ball elevator setpoints
-    if (leftJoystick.getRisingEdge(4)) {
-      hatchButtonMode = true; // hatch panel
-    } else if (leftJoystick.getRisingEdge(5)) {
-      hatchButtonMode = false; // cargo ball
-    }
-
-    // PNEUMATIC TEST
-    // lifts and drops hatch dustpan
-    if (operatorJoystick.getRisingEdge(1)) {
+    // operator can manually toggle dustpan
+    if (operatorJoystick.getRisingEdge(2)) {
       hatchIntake.toggleDustpan();
     }
 
-    /*
-     * extends the BCV slide piston if (operatorJoystick.getRawButton(3)) {
-     * carriage.extendBCV(); } else { carriage.retractBCV(); }
-     */
-
-    // opens BCV fingers only when arms are open
-    if (operatorJoystick.getRawButton(2)) {
-      carriage.openArms();
-      if (operatorJoystick.getRawButton(3)) {
-        carriage.openBCV();
-      } else {
-        carriage.closeBCV();
-      }
-    } else {
-      carriage.closeArms();
+    // moves cargo intake within frame perimeter
+    if (operatorJoystick.getRisingEdge(3)) {
+      cargoIntake.topPosition();
     }
 
-    // Hatch Intake controls for Intaking, Spitting, and Stopping
-    if (operatorJoystick.getRawButton(7)) {
-      hatchIntake.runIntake();
-    } else {
-      hatchIntake.stopIntake();
+    // Switches between Hatch Mode and Ball Mode
+    if (leftJoystick.getRisingEdge(4)) {
+      hatchButtonMode = true;
+      carriage.frontPosition();
+    } else if (leftJoystick.getRisingEdge(5)) {
+      hatchButtonMode = false;
+      carriage.backPosition();
+    }
+
+    /**
+     * Here lies the logic for button mapping between hatch and cargo mode Some
+     * buttons serve homologous functions between the two modes (eg: elevator
+     * setpoint buttons)
+     */
+    // hatch mode
+
+    if (hatchButtonMode) {
+      // only opens arms if carriage is on front
+      // switching to hatch mdoe should automatically move carriage
+      // this acts as a safety precaution
+      if (carriage.getCurrentOrientation()) {
+        carriage.openArms();
+      }
+
+      // elevator setpoints
+      if (rightJoystick.getRisingEdge(3)) {
+        carriage.frontPosition();
+        hatchIntake.dropDustpan();
+        elevator.moveSmooth(2.0);
+      } else if (rightJoystick.getRisingEdge(4)) {
+        carriage.frontPosition();
+        elevator.moveSmooth(ROCKET_HIGH_HATCH);
+      } else if (rightJoystick.getRisingEdge(5)) {
+        carriage.frontPosition();
+        hatchIntake.dropDustpan();
+        elevator.moveSmooth(ROCKET_LOW_HATCH);
+      } else if (rightJoystick.getRisingEdge(6)) {
+        carriage.frontPosition();
+        elevator.moveSmooth(ROCKET_MID_HATCH);
+      }
+
+      // hatch intaking and placing
+      if (rightJoystick.getRawButton(1)) {
+        carriage.closeBCV();
+        carriage.extendBCV();
+      } else {
+        carriage.openBCV();
+        carriage.retractBCV();
+      }
+
+      // floor pickup for hatches
+      if (rightJoystick.getRawButton(2)) {
+        hatchIntake.dropDustpan();
+        hatchIntake.runIntake();
+      }
+
+    }
+    // cargo mode
+    else {
+      carriage.closeArms();
+      carriage.closeBCV();
+      carriage.retractBCV();
+
+      // elevator setpoints
+      if (rightJoystick.getRisingEdge(3)) {
+        carriage.frontPosition();
+        hatchIntake.dropDustpan();
+        elevator.moveSmooth(2.0);
+      } else if (rightJoystick.getRisingEdge(4)) {
+        carriage.topCargoPosition(); // carriage needs to be tilted upwards
+        elevator.moveSmooth(ROCKET_HIGH_CARGO);
+      } else if (rightJoystick.getRisingEdge(5)) {
+        carriage.frontPosition();
+        hatchIntake.dropDustpan();
+        elevator.moveSmooth(ROCKET_LOW_CARGO);
+      } else if (rightJoystick.getRisingEdge(6)) {
+        carriage.frontPosition();
+        elevator.moveSmooth(ROCKET_MID_CARGO);
+      }
+
+      // intaking cargo through cargo intake and carriage
+      if (rightJoystick.getRawButton(1)) {
+        cargoIntake.bottomPosition();
+        cargoIntake.runIntake();
+        carriage.spinArmWheels(0.75);
+      } else {
+        cargoIntake.stopIntake();
+        carriage.spinArmWheels(0.0);
+      }
+
+      // spits ball out of carriage
+      if (rightJoystick.getRawButton(2)) {
+        carriage.spinArmWheels(-0.75);
+      } else {
+        carriage.spinArmWheels(0.0);
+      }
+
     }
 
   }

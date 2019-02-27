@@ -13,14 +13,14 @@ package frc.settings;
 public interface ElevatorSettings {
 
     // Motion Profile Constants
-    public static final double ELEVATOR_KP = 0.0;
-    public static final double ELEVATOR_KI = 0.0;
-    public static final double ELEVATOR_KV = 1.0 / 24.8; // 24.8 in/s free speed
+    public static final double ELEVATOR_KP = 0.1;
+    public static final double ELEVATOR_KI = 0.02;
+    public static final double ELEVATOR_KV = 1.0 / (26.1 * 1.13); // 26.1 in/s free speed (1.13 is the scaling)
     public static final double ELEVATOR_KA = 0.0;
 
-    public static final double ELEVATOR_MAX_VEL = 0.0;
-    public static final double ELEVATOR_MAX_ACC = 0.0;
-    public static final double ELEVATOR_TOLERANCE = 0.0;
+    public static final double ELEVATOR_MAX_VEL = 20.0;
+    public static final double ELEVATOR_MAX_ACC = 40.0;
+    public static final double ELEVATOR_TOLERANCE = 2.0;
 
     public static final double ELEVATOR_HOLD_CONSTANT = 0.25;
 

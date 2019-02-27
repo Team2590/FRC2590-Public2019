@@ -10,7 +10,6 @@ package frc.subsystems;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
-import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.controllers.MotionProfile;
@@ -38,7 +37,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   private States carriageState = States.STOPPED;
 
   private enum States {
-    STOPPED, MOVING, CARGO_MODE, HATCH_MODE
+    STOPPED, MOVING
   }
 
   private Solenoid bcvFingers; // opens and closes the bicuspid valve
@@ -57,7 +56,6 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   private double errorSum;
   private double lastError;
 
-  private boolean isOnFront;
   // if the carriage is backwards, and the driver wants to go to hatch mode, the
   // carriage will swing to the front, and insteading of stopping, will
   // automatically switch states to hatch mode
@@ -86,7 +84,6 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
     errorSum = 0.0;
     lastError = 0.0;
 
-    isOnFront = false; // starts backwards in frame perimeter
     moveToHatchMode = false;
 
   }
@@ -138,16 +135,6 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
       if (carriageController.isDone()) {
         carriageState = States.STOPPED;
       }
-      break;
-
-    case CARGO_MODE:
-      retractBCV(); // stows away hatch manipulation components
-      closeBCV();
-      closeArms(); // closes intake arms, allows carriage to swing back and forth through elevator
-      break;
-
-    case HATCH_MODE:
-      openArms();
       break;
 
     default:
@@ -212,6 +199,13 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   }
 
   /**
+   * Flips the carriage to the top cargo position
+   */
+  public void topCargoPosition() {
+    swingCarriage(TOP_CARGO_POSITION);
+  }
+
+  /**
    * spins both carriage intake wheels
    * 
    * @param speed The power at which to run the motors [-1,1]
@@ -231,15 +225,11 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   }
 
   /**
-   * Sets the current position of the carriage based on the potentiometer Used to
-   * determine whether it is safe to open carriage arms or raise the elevator
+   * Use to check if it is safe to open the arms
+   * @return true if the carriage is on the front, false if at the back
    */
-  public void checkPosition() {
-    if (carriagePot.get() > 100) {
-      isOnFront = true;
-    } else {
-      isOnFront = false;
-    }
+  public boolean getCurrentOrientation() {
+    return carriagePot.get() > 100.0;
   }
 
   /**
