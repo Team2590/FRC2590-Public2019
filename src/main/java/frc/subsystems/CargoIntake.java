@@ -12,8 +12,8 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.command.Subsystem;
+import frc.controllers.ConstantCurrent;
 import frc.controllers.MotionProfile;
-import frc.controllers.PID;
 import frc.robot.RobotMap;
 import frc.settings.CargoIntakeSettings;
 import frc.settings.FieldSettings;
@@ -45,8 +45,11 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
   private NemesisVictor cargoIntakeMotor;
   private NemesisVictor cargoArticulateMotor;
   private AnalogPotentiometer cargoPot;
+
   private MotionProfile cargoArticulateController;
-  // private PID cargoArticulateController;
+  private ConstantCurrent manualController;
+
+  private boolean manual;
 
   private double setpoint;
   private double errorSum;
@@ -64,6 +67,10 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
 
     cargoArticulateController = new MotionProfile(CARGO_INTAKE_KP, CARGO_INTAKE_KI, CARGO_INTAKE_KV, CARGO_INTAKE_KA,
         CARGO_INTAKE_MAX_VEL, CARGO_INTAKE_MAX_ACC, CARGO_INTAKE_TOLERANCE, cargoPot, cargoArticulateMotor);
+
+    manualController = new ConstantCurrent(cargoArticulateMotor);
+
+    manual = false;
 
     setpoint = getAngle();
 
@@ -89,13 +96,19 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
       break;
 
     case MOVING:
-      // moves arm via motion profiling
-      cargoArticulateController.calculate();
 
-      if (cargoArticulateController.isDone()) {
-        cargoState = States.STOPPED;
+    if(manual) {
+      this.setpoint = getAngle();
+      manualController.calculate();
+      if(manualController.isDone()) {
+        holdPosition();
       }
-      // System.out.println("im in moving for cargo intake");
+    } else {
+        cargoArticulateController.calculate();
+        if (cargoArticulateController.isDone()) {
+          holdPosition();
+        }
+    }
 
       break;
 
@@ -118,15 +131,15 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
   }
 
   public void moveManually(double speed) {
-    cargoArticulateMotor.set(ControlMode.PercentOutput, speed);
-
+    manual = true;
+    manualController.setSetpoint(speed);
+    cargoState = States.MOVING;
   }
 
   public void moveCargoIntake(double setpoint) {
-
+    manual = false;
     cargoArticulateController.setSetpoint(setpoint);
     this.setpoint = setpoint;
-
     cargoState = States.MOVING;
   }
 

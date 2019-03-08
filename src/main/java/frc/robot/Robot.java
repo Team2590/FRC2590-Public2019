@@ -147,9 +147,9 @@ public class Robot extends TimedRobot implements FieldSettings {
     // This logic checks if the robot is still turning, to avoid switching states to
     // teleop in the middle of the control loop
     // Also prevents driver from moving the robot while it auto aligns
-    if (drivetrain.isTurnDone()) {
-      drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
-    }
+    // if (drivetrain.isTurnDone()) {
+    drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
+    // }
 
     // Auto Align
     // input the limelight reading once to avoid latency issues
@@ -177,13 +177,12 @@ public class Robot extends TimedRobot implements FieldSettings {
     }
 
     // move cargo intake manually
-    
-    if(operatorJoystick.getPOV()==0) 
-    { cargoIntake.moveManually(0.25); } 
-    else if
-     (operatorJoystick.getPOV()==180) 
-     { cargoIntake.moveManually(-0.25); }
-    
+    if (operatorJoystick.getPOV() == 0) {
+      cargoIntake.moveManually(0.75);
+    } else if (operatorJoystick.getPOV() == 180) {
+      cargoIntake.moveManually(-0.75);
+    }
+
     // Operator has the ability to move the carriage
     if (operatorJoystick.getRisingEdge(4)) {
       hatchButtonMode = false;
@@ -195,12 +194,6 @@ public class Robot extends TimedRobot implements FieldSettings {
       hatchButtonMode = false;
       carriage.backPosition();
     }
-
-    // operator can manually toggle dustpan
-    /*
-     * if (operatorJoystick.getRisingEdge(2)) { hatchIntake.toggleDustpan(); }
-     */
-    //if(operatorJoystick.getPOV()==)
 
     // moves cargo intake within frame perimeter
     if (operatorJoystick.getRisingEdge(3)) {
@@ -223,8 +216,8 @@ public class Robot extends TimedRobot implements FieldSettings {
      * buttons serve homologous functions between the two modes (eg: elevator
      * setpoint buttons)
      */
-    // hatch mode
 
+    // hatch mode
     if (hatchButtonMode) {
       // only opens arms if carriage is on front
 
@@ -235,6 +228,7 @@ public class Robot extends TimedRobot implements FieldSettings {
       }
 
       // elevator setpoints
+      // only allows driver to raise elevator while it is in the front position
       if (carriage.getCurrentOrientation()) {
         if (rightJoystick.getRisingEdge(3)) {
           // carriage.frontPosition();
@@ -254,27 +248,21 @@ public class Robot extends TimedRobot implements FieldSettings {
       // hatch intaking and placing
       if (rightJoystick.getRawButton(1)) {
         carriage.extendBCV();
-       //carriage.stopDelay();
+        // carriage.stopDelay();
       } else {
         carriage.retractBCV();
 
-      /* if (carriage.getDelayState() == false) {
-          carriage.openBCV();
-          carriage.startDelay();
-        }
-        if (carriage.getDelayState() == true) {
-          carriage.incrementCounter();
-        }
-        if (carriage.getDelayState() == true && carriage.getCount() == 10) {
-          carriage.retractBCV();
-          carriage.stopDelay();
-        }*/
+        /*
+         * if (carriage.getDelayState() == false) { carriage.openBCV();
+         * carriage.startDelay(); } if (carriage.getDelayState() == true) {
+         * carriage.incrementCounter(); } if (carriage.getDelayState() == true &&
+         * carriage.getCount() == 10) { carriage.retractBCV(); carriage.stopDelay(); }
+         */
       }
 
       if (rightJoystick.getRawButton(2)) {
         carriage.closeBCV();
-      }
-      else{
+      } else {
         carriage.openBCV();
       }
 
@@ -290,6 +278,7 @@ public class Robot extends TimedRobot implements FieldSettings {
        */
 
       // elevator setpoints
+      // only allows driver to move elevator while the carriage is on the front
       if (carriage.getCurrentOrientation()) {
         if (rightJoystick.getRisingEdge(3)) {
           carriage.frontPosition();

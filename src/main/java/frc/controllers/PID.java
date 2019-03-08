@@ -168,4 +168,8 @@ public class PID implements Controller {
         return done;
     }
 
+    public void setDone() {
+        done = true;
+    }
+
 }
