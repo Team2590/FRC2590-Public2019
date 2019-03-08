@@ -177,10 +177,13 @@ public class Robot extends TimedRobot implements FieldSettings {
     }
 
     // move cargo intake manually
-    /*
-     * if(operatorJoystick.getPOV()==0) { cargoIntake.moveManually(0.25); } else if
-     * (operatorJoystick.getPOV()==180) { cargoIntake.moveManually(-0.25); }
-     */
+    
+    if(operatorJoystick.getPOV()==0) 
+    { cargoIntake.moveManually(0.25); } 
+    else if
+     (operatorJoystick.getPOV()==180) 
+     { cargoIntake.moveManually(-0.25); }
+    
     // Operator has the ability to move the carriage
     if (operatorJoystick.getRisingEdge(4)) {
       hatchButtonMode = false;
