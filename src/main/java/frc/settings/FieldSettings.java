@@ -15,7 +15,7 @@ public interface FieldSettings {
     // setpoints for the hatch heights on the Rocket Ship
     public static final double ROCKET_LOW_HATCH = 9.5;
     public static final double ROCKET_MID_HATCH = 37.5;
-    public static final double ROCKET_HIGH_HATCH = 64.5; // should be 75, lower for testing purposes
+    public static final double ROCKET_HIGH_HATCH = 60.5; // should be 75, lower for testing purposes
 
     // setpoints for the cargo heights on the Rocket Ship
     public static final double ROCKET_LOW_CARGO = 15.5;

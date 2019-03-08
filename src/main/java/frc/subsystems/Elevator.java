@@ -11,6 +11,8 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.wpilibj.Encoder;
+
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.controllers.ConstantCurrent;
 import frc.controllers.MotionProfile;
@@ -49,6 +51,8 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
   private NemesisCANEncoder elevatorEncoder;
   private NemesisCANEncoder failSafeEncoder;
 
+  private Encoder externalEncoder;
+
   // Motion profile controller to move elevator smoothly and accurately
   private MotionProfile elevatorController;
 
@@ -64,14 +68,19 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     elevatorEncoder = new NemesisCANEncoder(elevatorMotor);
     failSafeEncoder = new NemesisCANEncoder(elevatorMotor);
 
+    externalEncoder = new Encoder(ELEVATOR_ENCODER_A, ELEVATOR_ENCODER_B);
+
     setConversionFactors();
     elevatorEncoder.setScaling(1.13);
     failSafeEncoder.setScaling(1.13);
 
+    externalEncoder.setName("Elevator Encoder");
+    //externalEncoder.reset();
+
     elevatorMotor.setIdleMode(IdleMode.kBrake);
 
     elevatorController = new MotionProfile(ELEVATOR_KP, ELEVATOR_KI, ELEVATOR_KV, ELEVATOR_KA, ELEVATOR_MAX_VEL,
-        ELEVATOR_MAX_ACC, ELEVATOR_TOLERANCE, elevatorEncoder, elevatorMotor);
+        ELEVATOR_MAX_ACC, ELEVATOR_TOLERANCE, externalEncoder, elevatorMotor);
 
     manualController = new ConstantCurrent(elevatorMotor);
 
@@ -138,15 +147,18 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
   public void setConversionFactors() {
     // converts from rotations to distance (inches)
     // Turning shaft diameter is 1 in
-    elevatorEncoder.setPositionConversionFactor(Math.PI / GEAR_RATIO);
-    failSafeEncoder.setPositionConversionFactor(Math.PI / GEAR_RATIO);
+    elevatorEncoder.setPositionConversionFactor((Math.PI / GEAR_RATIO));
+    failSafeEncoder.setPositionConversionFactor((Math.PI / GEAR_RATIO));
+
+    externalEncoder.setDistancePerPulse(0.001238);
+   
     // converts from RPM to velocity (in/s)
     elevatorEncoder.setVelocityConversionFactor(Math.PI / (GEAR_RATIO * 60.0));
     failSafeEncoder.setVelocityConversionFactor(Math.PI / (GEAR_RATIO * 60.0));
   }
 
   public double getHeight() {
-    return elevatorEncoder.getPosition();
+    return externalEncoder.getDistance();
   }
 
   public void stopElevator() {

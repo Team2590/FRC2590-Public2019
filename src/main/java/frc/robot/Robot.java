@@ -5,6 +5,7 @@
  */
 package frc.robot;
 
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -38,6 +39,8 @@ public class Robot extends TimedRobot implements FieldSettings {
   // Limelight camera for vision targeting
   private static Limelight limelight;
 
+  private CameraServer camServer;
+
   // Compressor
   private Compressor compressor;
 
@@ -70,12 +73,16 @@ public class Robot extends TimedRobot implements FieldSettings {
     // limelight camera
     limelight = Limelight.getLimelightInstance();
 
+    /*
+     * camServer.addAxisCamera("10.25.90.12"); camServer.startAutomaticCapture();
+     */
+
     enabledLooper = new Looper(REFRESH_RATE);
 
     // add subsystems to the Looper holster
     enabledLooper.register(drivetrain::update);
     enabledLooper.register(hatchIntake::update);
-    // enabledLooper.register(cargoIntake::update);
+    enabledLooper.register(cargoIntake::update);
     enabledLooper.register(carriage::update);
     enabledLooper.register(elevator::update);
 
@@ -97,6 +104,7 @@ public class Robot extends TimedRobot implements FieldSettings {
   @Override
   public void autonomousInit() {
     enabledLooper.startLoops();
+    drivetrain.resetAllSensors();
   }
 
   /**
@@ -129,41 +137,50 @@ public class Robot extends TimedRobot implements FieldSettings {
     // System.out.println("PDP :: " + pdp.getCurrent(4));
     // System.out.println("Carriage :: " + carriage.getAngle());
     // System.out.println("Cargo Intake :: " + cargoIntake.getAngle());
-    // System.out.println(elevator.getHeight());
-    System.out.println(drivetrain.getDistanceNEO(true) + " " + drivetrain.getDistanceQuadEnc(true) + " "
-        + drivetrain.getDistanceNEO(false) + " " + drivetrain.getDistanceQuadEnc(false));
+
+    // System.out.println("Elevator Encoder :: " + elevator.getHeight());
+    // System.out.println(drivetrain.getDistanceNEO(true) + " " +
+    // drivetrain.getDistanceQuadEnc(true) + " "
+    // + drivetrain.getDistanceNEO(false) + " " +
+    // drivetrain.getDistanceQuadEnc(false));
 
     // This logic checks if the robot is still turning, to avoid switching states to
     // teleop in the middle of the control loop
     // Also prevents driver from moving the robot while it auto aligns
-    // if (drivetrain.isTurnDone()) {
-    drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
-    // }
+    if (drivetrain.isTurnDone()) {
+      drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
+    }
 
     // Auto Align
     // input the limelight reading once to avoid latency issues
 
-    /*
-     * if (leftJoystick.getRisingEdge(1)) { limelight.update(); double
-     * visionSetpoint = limelight.horizontalAngleToTarget();
-     * drivetrain.turn(-visionSetpoint); }
-     */
-
-    /**
-     * The following logic is independent of the button mode
-     */
-
-    // manual shifting
-    if (leftJoystick.getRisingEdge(2)) {
-      drivetrain.toggleShift();
+    if (leftJoystick.getRisingEdge(1)) {
+      limelight.update();
+      drivetrain.turn(drivetrain.getHeading() + limelight.horizontalAngleToTarget());
     }
 
     // drops dustpan and outtakes slowly
-    if (leftJoystick.getRawButton(3)) {
-      hatchIntake.dropDustpan();
-      hatchIntake.reverseIntake();
+    /*
+     * if (leftJoystick.getRawButton(3)) { hatchIntake.dropDustpan();
+     * hatchIntake.reverseIntake(); }
+     */
+
+    if (rightJoystick.getPOV() == 0) {
+      elevator.moveManually(.25);
+    } else if (rightJoystick.getPOV() == 180) {
+      elevator.moveManually(-.25);
     }
 
+    if (leftJoystick.getRisingEdge(3)) {
+      hatchButtonMode = false;
+      carriage.frontPosition();
+    }
+
+    // move cargo intake manually
+    /*
+     * if(operatorJoystick.getPOV()==0) { cargoIntake.moveManually(0.25); } else if
+     * (operatorJoystick.getPOV()==180) { cargoIntake.moveManually(-0.25); }
+     */
     // Operator has the ability to move the carriage
     if (operatorJoystick.getRisingEdge(4)) {
       hatchButtonMode = false;
@@ -177,9 +194,10 @@ public class Robot extends TimedRobot implements FieldSettings {
     }
 
     // operator can manually toggle dustpan
-    if (operatorJoystick.getRisingEdge(2)) {
-      hatchIntake.toggleDustpan();
-    }
+    /*
+     * if (operatorJoystick.getRisingEdge(2)) { hatchIntake.toggleDustpan(); }
+     */
+    //if(operatorJoystick.getPOV()==)
 
     // moves cargo intake within frame perimeter
     if (operatorJoystick.getRisingEdge(3)) {
@@ -189,9 +207,11 @@ public class Robot extends TimedRobot implements FieldSettings {
     // Switches between Hatch Mode and Ball Mode
     if (leftJoystick.getRisingEdge(4)) {
       hatchButtonMode = true;
+      elevator.moveSmooth(2.0);
       carriage.frontPosition();
     } else if (leftJoystick.getRisingEdge(5)) {
       hatchButtonMode = false;
+      elevator.moveSmooth(2.0);
       carriage.backPosition();
     }
 
@@ -204,6 +224,7 @@ public class Robot extends TimedRobot implements FieldSettings {
 
     if (hatchButtonMode) {
       // only opens arms if carriage is on front
+
       // switching to hatch mdoe should automatically move carriage
       // this acts as a safety precaution
       if (carriage.getCurrentOrientation()) {
@@ -211,35 +232,47 @@ public class Robot extends TimedRobot implements FieldSettings {
       }
 
       // elevator setpoints
-      if (rightJoystick.getRisingEdge(3)) {
-        carriage.frontPosition();
-        hatchIntake.dropDustpan();
-        elevator.moveSmooth(2.0);
-      } else if (rightJoystick.getRisingEdge(4)) {
-        carriage.frontPosition();
-        elevator.moveSmooth(ROCKET_HIGH_HATCH);
-      } else if (rightJoystick.getRisingEdge(5)) {
-        carriage.frontPosition();
-        hatchIntake.dropDustpan();
-        elevator.moveSmooth(ROCKET_LOW_HATCH);
-      } else if (rightJoystick.getRisingEdge(6)) {
-        carriage.frontPosition();
-        elevator.moveSmooth(ROCKET_MID_HATCH);
+      if (carriage.getCurrentOrientation()) {
+        if (rightJoystick.getRisingEdge(3)) {
+          // carriage.frontPosition();
+          elevator.moveSmooth(2.0);
+        } else if (rightJoystick.getRisingEdge(4)) {
+          // carriage.frontPosition();
+          elevator.moveSmooth(ROCKET_HIGH_HATCH);
+        } else if (rightJoystick.getRisingEdge(5)) {
+          // carriage.frontPosition();
+          elevator.moveSmooth(ROCKET_LOW_HATCH);
+        } else if (rightJoystick.getRisingEdge(6)) {
+          // carriage.frontPosition();
+          elevator.moveSmooth(ROCKET_MID_HATCH);
+        }
       }
 
       // hatch intaking and placing
       if (rightJoystick.getRawButton(1)) {
-        carriage.closeBCV();
         carriage.extendBCV();
+       //carriage.stopDelay();
       } else {
-        carriage.openBCV();
         carriage.retractBCV();
+
+      /* if (carriage.getDelayState() == false) {
+          carriage.openBCV();
+          carriage.startDelay();
+        }
+        if (carriage.getDelayState() == true) {
+          carriage.incrementCounter();
+        }
+        if (carriage.getDelayState() == true && carriage.getCount() == 10) {
+          carriage.retractBCV();
+          carriage.stopDelay();
+        }*/
       }
 
-      // floor pickup for hatches
       if (rightJoystick.getRawButton(2)) {
-        hatchIntake.dropDustpan();
-        hatchIntake.runIntake();
+        carriage.closeBCV();
+      }
+      else{
+        carriage.openBCV();
       }
 
     }
@@ -249,38 +282,47 @@ public class Robot extends TimedRobot implements FieldSettings {
       carriage.closeBCV();
       carriage.retractBCV();
 
+      /*
+       * if(leftJoystick.getRisingEdge(2)) { carriage.backPosition(); }
+       */
+
       // elevator setpoints
-      if (rightJoystick.getRisingEdge(3)) {
-        carriage.frontPosition();
-        hatchIntake.dropDustpan();
-        elevator.moveSmooth(2.0);
-      } else if (rightJoystick.getRisingEdge(4)) {
-        carriage.topCargoPosition(); // carriage needs to be tilted upwards
-        elevator.moveSmooth(ROCKET_HIGH_CARGO);
-      } else if (rightJoystick.getRisingEdge(5)) {
-        carriage.frontPosition();
-        hatchIntake.dropDustpan();
-        elevator.moveSmooth(ROCKET_LOW_CARGO);
-      } else if (rightJoystick.getRisingEdge(6)) {
-        carriage.frontPosition();
-        elevator.moveSmooth(ROCKET_MID_CARGO);
+      if (carriage.getCurrentOrientation()) {
+        if (rightJoystick.getRisingEdge(3)) {
+          carriage.frontPosition();
+          elevator.moveSmooth(2.0);
+        } else if (rightJoystick.getRisingEdge(4)) {
+          carriage.topCargoPosition(); // carriage needs to be tilted upwards
+          elevator.moveSmooth(ROCKET_HIGH_CARGO);
+        } else if (rightJoystick.getRisingEdge(5)) {
+          carriage.frontPosition();
+          elevator.moveSmooth(ROCKET_LOW_CARGO);
+        } else if (rightJoystick.getRisingEdge(6)) {
+          carriage.frontPosition();
+          elevator.moveSmooth(ROCKET_MID_CARGO);
+        } else if (leftJoystick.getRisingEdge(2)) {
+          carriage.frontPosition();
+          elevator.moveSmooth(35.5);
+        }
       }
 
       // intaking cargo through cargo intake and carriage
       if (rightJoystick.getRawButton(1)) {
         cargoIntake.bottomPosition();
         cargoIntake.runIntake();
-        carriage.spinArmWheels(0.75);
-      } else {
+        carriage.spinArmWheels(1);
+      }
+
+      else {
         cargoIntake.stopIntake();
-        carriage.spinArmWheels(0.0);
+        carriage.spinArmWheels(0.05);
       }
 
       // spits ball out of carriage
       if (rightJoystick.getRawButton(2)) {
-        carriage.spinArmWheels(-0.75);
+        carriage.spinArmWheels(-1);
       } else {
-        carriage.spinArmWheels(0.0);
+        // carriage.spinArmWheels(0.0);
       }
 
     }

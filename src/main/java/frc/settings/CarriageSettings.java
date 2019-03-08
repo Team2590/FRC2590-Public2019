@@ -24,10 +24,10 @@ public interface CarriageSettings {
 
     public static final double kP_HOLD_CONSTANT = 0.0275; //0.0275
     public static final double kI_HOLD_CONSTANT = 0.005; //0.005
-    public static final double kD_HOLD_CONSTANT = 0.0001;
+    public static final double kD_HOLD_CONSTANT = 0.0001; //0.0001
 
-    public static final double FRONT_POSITION = 180.0;
-    public static final double BACK_POSITION = 5.0; //not set to zero to that it doest overflow to 360
+    public static final double FRONT_POSITION = 175.0;
+    public static final double BACK_POSITION = 7.0; //not set to zero to that it doest overflow to 360
     public static final double HATCH_HANDOFF_POSITION = 0.0;
     public static final double UPRIGHT_POSITION = 90.0;
     public static final double TOP_CARGO_POSITION = 130.0;

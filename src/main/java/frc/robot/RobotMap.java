@@ -12,7 +12,14 @@ public interface RobotMap {
     public static final int RIGHT_DRIVE_MASTER = 3;
     public static final int RIGHT_DRIVE_SLAVE = 4;
 
+    public static final int LEFT_DRIVE_ENCODER_A = 2;
+    public static final int LEFT_DRIVE_ENCODER_B = 3;
+    public static final int RIGHT_DRIVE_ENCODER_A = 4;
+    public static final int RIGHT_DRIVE_ENCODER_B = 5;
+
     public static final int GEAR_SHIFT_SOLENOID = 7;
+
+    public static final int DRIVETRAIN_GYRO = 0;
 
     // Cargo intake
     public static final int CARGO_ARTICULATOR = 6;
@@ -26,6 +33,9 @@ public interface RobotMap {
 
     // Elevator
     public static final int ELEVATOR_MOTOR = 5;
+
+    public static final int ELEVATOR_ENCODER_A = 0;
+    public static final int ELEVATOR_ENCODER_B = 1;
 
     // Carriage
     public static final int ARM_SOLENOID = 0;

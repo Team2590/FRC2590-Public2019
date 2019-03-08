@@ -12,6 +12,7 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.command.Subsystem;
+import frc.controllers.MotionProfile;
 import frc.controllers.PID;
 import frc.robot.RobotMap;
 import frc.settings.CargoIntakeSettings;
@@ -44,8 +45,8 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
   private NemesisVictor cargoIntakeMotor;
   private NemesisVictor cargoArticulateMotor;
   private AnalogPotentiometer cargoPot;
-  // private MotionProfile cargoArticulateController;
-  private PID cargoArticulateController;
+  private MotionProfile cargoArticulateController;
+  // private PID cargoArticulateController;
 
   private double setpoint;
   private double errorSum;
@@ -56,17 +57,15 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
     cargoArticulateMotor = new NemesisVictor(CARGO_ARTICULATOR);
     cargoPot = new AnalogPotentiometer(CARGO_POTENTIOMETER, 360.0);
 
+    cargoArticulateMotor.setInverted(true);
+
     cargoIntakeMotor.setNeutralMode(NeutralMode.Brake);
     cargoArticulateMotor.setNeutralMode(NeutralMode.Brake);
 
-    // cargoArticulateController = new MotionProfile(CARGO_INTAKE_KP,
-    // CARGO_INTAKE_KI, CARGO_INTAKE_KV, CARGO_INTAKE_KA,
-    // CARGO_INTAKE_MAX_VEL, CARGO_INTAKE_MAX_ACC, CARGO_INTAKE_TOLERANCE, cargoPot,
-    // cargoArticulateMotor);
-    cargoArticulateController = new PID(CARGO_INTAKE_KP, CARGO_INTAKE_KI, CARGO_INTAKE_KD, 2.0, cargoPot,
-        cargoArticulateMotor);
+    cargoArticulateController = new MotionProfile(CARGO_INTAKE_KP, CARGO_INTAKE_KI, CARGO_INTAKE_KV, CARGO_INTAKE_KA,
+        CARGO_INTAKE_MAX_VEL, CARGO_INTAKE_MAX_ACC, CARGO_INTAKE_TOLERANCE, cargoPot, cargoArticulateMotor);
 
-    setpoint = 30.0; // should be getAngle(), botPos for testing
+    setpoint = getAngle();
 
     errorSum = 0.0;
     lastError = 0.0;
@@ -86,15 +85,17 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
       lastError = error;
 
       cargoArticulateMotor.set(ControlMode.PercentOutput, command);
+      // System.out.println("Command :: " + command);
       break;
 
     case MOVING:
-      // moves arm via motion profiling 
+      // moves arm via motion profiling
       cargoArticulateController.calculate();
-      
+
       if (cargoArticulateController.isDone()) {
         cargoState = States.STOPPED;
       }
+      // System.out.println("im in moving for cargo intake");
 
       break;
 
@@ -105,7 +106,7 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
   }
 
   public void runIntake() {
-    cargoIntakeMotor.set(ControlMode.PercentOutput, 0.5);
+    cargoIntakeMotor.set(ControlMode.PercentOutput, 0.8);
   }
 
   public void stopIntake() {
@@ -113,20 +114,24 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
   }
 
   public void reverseIntake() {
-    cargoIntakeMotor.set(ControlMode.PercentOutput, -0.5);
+    cargoIntakeMotor.set(ControlMode.PercentOutput, -1.0);
   }
 
   public void moveManually(double speed) {
     cargoArticulateMotor.set(ControlMode.PercentOutput, speed);
+
   }
 
   public void moveCargoIntake(double setpoint) {
+
     cargoArticulateController.setSetpoint(setpoint);
     this.setpoint = setpoint;
+
     cargoState = States.MOVING;
   }
 
   public void bottomPosition() {
+
     moveCargoIntake(BOTTOM_POSITION);
   }
 

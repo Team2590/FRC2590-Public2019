@@ -9,13 +9,13 @@ package frc.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 
-import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.controllers.MotionProfile;
 import frc.robot.RobotMap;
 import frc.settings.CarriageSettings;
 import frc.settings.FieldSettings;
+import frc.util.NemesisPotentiometer;
 import frc.util.NemesisVictor;
 
 /**
@@ -48,7 +48,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   private NemesisVictor rightMotor;
   private NemesisVictor swingMotor;
 
-  private AnalogPotentiometer carriagePot;
+  private NemesisPotentiometer carriagePot;
 
   private MotionProfile carriageController;
 
@@ -56,10 +56,8 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   private double errorSum;
   private double lastError;
 
-  // if the carriage is backwards, and the driver wants to go to hatch mode, the
-  // carriage will swing to the front, and insteading of stopping, will
-  // automatically switch states to hatch mode
-  private boolean moveToHatchMode;
+  private boolean isInDelay;
+  private double counter;
 
   public Carriage() {
     bcvFingers = new Solenoid(BCV_FINGER_SOLENOID);
@@ -73,7 +71,8 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
     rightMotor.setInverted(true);
     swingMotor.setInverted(true);
 
-    carriagePot = new AnalogPotentiometer(CARRIAGE_POTENTIOMETER, 360.0);
+    carriagePot = new NemesisPotentiometer(CARRIAGE_POTENTIOMETER, 360.0);
+    carriagePot.setSlipLimit(270.0);
     carriagePot.setName("Carriage Potentiometer");
 
     carriageController = new MotionProfile(CARRIAGE_KP, CARRIAGE_KI, CARRIAGE_KV, CARRIAGE_KA, CARRIAGE_MAX_VEL,
@@ -84,8 +83,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
     errorSum = 0.0;
     lastError = 0.0;
 
-    moveToHatchMode = false;
-
+    isInDelay = false;
   }
 
   public void update() {
@@ -98,13 +96,13 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
       double deltaError = error - lastError;
       double command = 0.0;
 
-      if (setpoint > 100) {
+      if (setpoint > 100 && setpoint < 170) {
         // carriage is help in place in the from position, requires PID controller
         errorSum += error * REFRESH_RATE;
         command = error * kP_HOLD_CONSTANT + errorSum * kI_HOLD_CONSTANT + deltaError * kD_HOLD_CONSTANT;
         lastError = error;
 
-      } else if (setpoint < 80) {
+      } else if (setpoint < 80 || setpoint > 170) {
         // turns the controller off when on the hard stop
         command = 0.0;
         errorSum = 0.0;
@@ -122,10 +120,9 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
       break;
 
     case MOVING:
-      // makes sure the elements of the carraige are stowed before moving
-      closeArms();
-      closeBCV();
-      retractBCV();
+      //solenoids are automatically stowed in the Robot.java class, since constant
+      //back and forth firing will drop game elements
+
       setSpeeds(0.0, 0.0);
 
       // moves the carriage to desired setpoint via motion profiling
@@ -171,6 +168,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   /**
    * Flips the carriage to the back position
    */
+
   public void backPosition() {
     swingCarriage(BACK_POSITION);
   }
@@ -179,7 +177,9 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    * Flips the carriage to the front position
    */
   public void frontPosition() {
-    swingCarriage(FRONT_POSITION);
+    if (getCurrentOrientation() == false) {
+      swingCarriage(FRONT_POSITION);
+    }
   }
 
   /**
@@ -226,10 +226,37 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
 
   /**
    * Use to check if it is safe to open the arms
+   * 
    * @return true if the carriage is on the front, false if at the back
    */
   public boolean getCurrentOrientation() {
     return carriagePot.get() > 100.0;
+  }
+
+  public boolean getDelayState() {
+    return isInDelay;
+  }
+
+  public double getCount() {
+    return counter;
+  }
+
+  public boolean isMoving() {
+    return carriageState == States.MOVING;
+  }
+
+  public void startDelay() {
+    counter = 0;
+    isInDelay = true;
+  }
+
+  public void incrementCounter() {
+    counter += 1;
+  }
+
+  public void stopDelay() {
+    isInDelay = false;
+    counter = 0;
   }
 
   /**
@@ -244,6 +271,11 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    */
   public void closeBCV() {
     bcvFingers.set(false);
+  }
+
+  public void toggleBCV() {
+    boolean curr = bcvFingers.get();
+    bcvFingers.set(!curr);
   }
 
   /**

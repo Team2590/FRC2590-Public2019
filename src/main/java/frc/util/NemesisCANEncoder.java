@@ -42,7 +42,7 @@ public class NemesisCANEncoder extends CANEncoder implements PIDSource {
 
     @Override
     public double pidGet() {
-        return getPosition() * scaling;
+        return this.getPosition();
     }
 
     public void setReverseDirection(boolean reverse) {

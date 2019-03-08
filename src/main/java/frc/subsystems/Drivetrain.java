@@ -12,8 +12,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import edu.wpi.first.hal.sim.mockdata.EncoderDataJNI;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
@@ -74,7 +73,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   private Solenoid shiftingPiston;
 
   // Gyro sensor for reading the robots heading
-  private ADXRS450_Gyro gyro;
+  private AnalogGyro gyro;
 
   // Built-in PID controllers to linearize each drivetrain side
   private CANPIDController leftDriveLinearizer;
@@ -114,8 +113,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     leftDriveEncoder = new NemesisCANEncoder(leftDriveMaster);
     rightDriveEncoder = new NemesisCANEncoder(rightDriveMaster);
 
-    leftExternalEnc = new Encoder(0, 1);
-    rightExternalEnc = new Encoder(2, 3);
+    leftExternalEnc = new Encoder(LEFT_DRIVE_ENCODER_A, LEFT_DRIVE_ENCODER_B);
+    rightExternalEnc = new Encoder(RIGHT_DRIVE_ENCODER_A, RIGHT_DRIVE_ENCODER_B);
 
     // converts units of encoders
     setConversionFactors();
@@ -125,9 +124,11 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
     driveSystem = new NemesisDrive();
     dualMotorControllers = new NemesisMultiMC(leftDriveMaster, rightDriveMaster);
+    dualMotorControllers.setIndividualInverted(0, true);
 
     shiftingPiston = new Solenoid(GEAR_SHIFT_SOLENOID);
-    // gyro = new ADXRS450_Gyro();
+
+    gyro = new AnalogGyro(DRIVETRAIN_GYRO);
 
     // PID drive linearizers
     // leftDriveLinearizer = new CANPIDController(leftDriveMaster);
@@ -138,8 +139,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     // rightDriveLinearizer.setP(RIGHT_LINEAR_KP);
     // rightDriveLinearizer.setI(RIGHT_LINEAR_KI);
 
-    // turnController = new PID(TURN_KP, TURN_KI, TURN_KD, 2.0, gyro,
-    // dualMotorControllers);
+    turnController = new PID(TURN_KP, TURN_KI, TURN_KD, TURN_TOLERANCE, gyro, dualMotorControllers);
 
     // 80 in/sec^2 arbitrary accel value to avoid syntax error
     leftDriveProfiler = new MotionProfile(DRIVETRAIN_KP, DRIVETRAIN_KI, DRIVETRAIN_KV, DRIVETRAIN_KA,
@@ -157,13 +157,15 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
   // updates the drivetrain's state with every iteration of teleopPeriodic()
   public void update() {
+    System.out.println("drive state " + driveState);
+    //System.out.println("gyro :" + gyro.getAngle());
     switch (driveState) {
     case STOPPED:
       setSpeeds(0, 0);
       break;
 
     case TELEOP_DRIVE:
-      // automaticGearShift();
+      //automaticGearShift();
       // arcade drive
       double out[] = driveSystem.calculate(straightPower, turnPower);
       setSpeeds(out[0], out[1]);
@@ -180,8 +182,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
       turnController.calculate();
       if (turnController.isDone()) {
         turnDone = true;
-        driveState = States.STOPPED;
-      }
+        driveState = States.TELEOP_DRIVE;
+      } 
       break;
 
     case DRIVE_STRAIGHT:
@@ -260,11 +262,19 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   /**
    * This method reads the current speed of the drive motors and automatically
    * determines which gear the robot should be in (high = false, low = true)
+   * Upshifts at a higher speed than it Downshifts (Hysteresis)
    */
   public void automaticGearShift() {
     // averages the two sides to find center speed
-    double robotSpeed = (leftDriveEncoder.getVelocity() + rightDriveEncoder.getVelocity()) / 2;
-    isHighGear = robotSpeed > MAX_LOW_GEAR_VELOCITY;
+    double robotSpeed = Math.abs((leftExternalEnc.getRate() + rightExternalEnc.getRate()) / 2);
+
+    if (!isHighGear) { // currently low gear, upshifting
+      isHighGear = robotSpeed > MAX_LOW_GEAR_VELOCITY- 6.0;
+    } else { // currently high gear, downshifting
+      isHighGear = robotSpeed < (MAX_LOW_GEAR_VELOCITY - HYSTERESIS);
+    }
+
+    System.out.println(isHighGear);
     shiftingPiston.set(isHighGear);
   }
 
@@ -281,8 +291,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
   // toggles between high and low gear
   public void toggleShift() {
-    isHighGear = !isHighGear;
-    manualGearShift(isHighGear);
+    manualGearShift(!isHighGear);
   }
 
   /**
@@ -329,13 +338,19 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     }
   }
 
+  public double getHeading() {
+    return gyro.getAngle();
+  }
+
   /**
    * Resets the DT's encoders and gyros
    */
   public void resetAllSensors() {
-    // gyro.reset();
+    gyro.reset();
     leftDriveEncoder.setPosition(0.0);
     rightDriveEncoder.setPosition(0.0);
+    leftExternalEnc.reset();
+    rightExternalEnc.reset();
   }
 
   public NemesisDrive getRobotDrive() {
