@@ -60,7 +60,7 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
     cargoArticulateMotor = new NemesisVictor(CARGO_ARTICULATOR);
     cargoPot = new AnalogPotentiometer(CARGO_POTENTIOMETER, 360.0);
 
-    cargoArticulateMotor.setInverted(true);
+    cargoArticulateMotor.setInverted(false);
 
     cargoIntakeMotor.setNeutralMode(NeutralMode.Brake);
     cargoArticulateMotor.setNeutralMode(NeutralMode.Brake);
@@ -87,7 +87,12 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
       errorSum += error * REFRESH_RATE;
       double deltaError = error - lastError;
       // adds the error terms
-      command = error * kP_HOLD_CONSTANT + errorSum * kI_HOLD_CONSTANT + deltaError * kD_HOLD_CONSTANT;
+      command = error * kP_HOLD_CONSTANT + errorSum * kI_HOLD_CONSTANT + deltaError * kD_HOLD_CONSTANT
+          + kF_HOLD_CONSTANT;
+
+      if (getAngle() > 20 && getAngle() < 50) {
+        command = 0.0;
+      }
 
       lastError = error;
 
@@ -97,18 +102,18 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
 
     case MOVING:
 
-    if(manual) {
-      this.setpoint = getAngle();
-      manualController.calculate();
-      if(manualController.isDone()) {
-        holdPosition();
-      }
-    } else {
+      if (manual) {
+        this.setpoint = getAngle();
+        manualController.calculate();
+        if (manualController.isDone()) {
+          holdPosition();
+        }
+      } else {
         cargoArticulateController.calculate();
         if (cargoArticulateController.isDone()) {
           holdPosition();
         }
-    }
+      }
 
       break;
 
@@ -119,7 +124,7 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
   }
 
   public void runIntake() {
-    cargoIntakeMotor.set(ControlMode.PercentOutput, 0.8);
+    cargoIntakeMotor.set(ControlMode.PercentOutput, 0.5);
   }
 
   public void stopIntake() {
@@ -127,7 +132,7 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
   }
 
   public void reverseIntake() {
-    cargoIntakeMotor.set(ControlMode.PercentOutput, -1.0);
+    cargoIntakeMotor.set(ControlMode.PercentOutput, -0.5);
   }
 
   public void moveManually(double speed) {
@@ -144,7 +149,6 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
   }
 
   public void bottomPosition() {
-
     moveCargoIntake(BOTTOM_POSITION);
   }
 
@@ -158,6 +162,10 @@ public class CargoIntake extends Subsystem implements RobotMap, CargoIntakeSetti
 
   public double getAngle() {
     return cargoPot.get();
+  }
+
+  public boolean isMoving() {
+    return cargoState == States.MOVING;
   }
 
   @Override

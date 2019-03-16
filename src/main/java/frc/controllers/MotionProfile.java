@@ -51,6 +51,7 @@ public class MotionProfile implements Controller {
     private int count;
     private int i1; // iteration step from accel to cruising
     private int i2; // iteration step from cruising to decel
+    private int totalSteps;
 
     // error sum for an integral feedback
     private double errorSum;
@@ -105,6 +106,7 @@ public class MotionProfile implements Controller {
         errorSum = 0.0;
 
         totalTime = 0.0;
+        totalSteps = 0;
 
         dir = 1;
     }
@@ -131,6 +133,7 @@ public class MotionProfile implements Controller {
 
         // calculates the time required to follow the profile
         totalTime = (travelDistance / capMaxVel) + (capMaxVel / maxAcc);
+        totalSteps = (int)(totalTime / dt);
 
         // calcualtes the accel and cruise distances
         accelDistance = (capMaxVel * capMaxVel) / (2 * maxAcc); // d = v^2 / 2a
@@ -188,13 +191,17 @@ public class MotionProfile implements Controller {
             double command = kV * output_velocity + kA * output_acceleration + kP * error + kI * errorSum;
 
             // profile is finished, output 0.0 to motors and exit
-            if (Math.abs(endPoint - currentPos) < tolerance) {
+            // if (Math.abs(endPoint - currentPos) < tolerance) {
+            //     done = true;
+            //     command = 0.0;
+            // }
+            if(count >= totalSteps) {
                 done = true;
                 command = 0.0;
             }
 
-           System.out.println(
-                    count * dt + " " + output_position + " " + currentPos + " " + output_velocity + " " + command);
+            // System.out.println(
+            //          count * dt + " " + output_position + " " + currentPos + " " + output_velocity + " " + command);
             output.pidWrite(command);
         }
     }

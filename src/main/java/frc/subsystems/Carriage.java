@@ -41,11 +41,8 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   }
 
   private Solenoid bcvFingers; // opens and closes the bicuspid valve
-  private Solenoid bcvExtender; // extends and retracts the bicuspid valve
-  private Solenoid armPiston; // opens and closes the intake arms
 
-  private NemesisVictor leftMotor;
-  private NemesisVictor rightMotor;
+  private NemesisVictor intakeMotor;
   private NemesisVictor swingMotor;
 
   private NemesisPotentiometer carriagePot;
@@ -61,15 +58,13 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
 
   public Carriage() {
     bcvFingers = new Solenoid(BCV_FINGER_SOLENOID);
-    bcvExtender = new Solenoid(BCV_EXTENDER_SOLENOID);
-    armPiston = new Solenoid(ARM_SOLENOID);
 
-    leftMotor = new NemesisVictor(LEFT_CARRIAGE_MOTOR);
-    rightMotor = new NemesisVictor(RIGHT_CARRIAGE_MOTOR);
-    swingMotor = new NemesisVictor(SWING_CARRIAGE_MOTOR);
+    intakeMotor = new NemesisVictor(RIGHT_CARRIAGE_MOTOR);
+    //swingMotor = new NemesisVictor(SWING_CARRIAGE_MOTOR);
+    swingMotor = new NemesisVictor(SWING_CARRIAGE_MOTOR, 6, true, 5.0, 10);
 
-    rightMotor.setInverted(true);
-    swingMotor.setInverted(true);
+    intakeMotor.setInverted(false);
+    swingMotor.setInverted(false);
 
     carriagePot = new NemesisPotentiometer(CARRIAGE_POTENTIOMETER, 360.0);
     carriagePot.setSlipLimit(270.0);
@@ -87,7 +82,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   }
 
   public void update() {
-
+    //System.out.println(carriageState);
     switch (carriageState) {
 
     case STOPPED:
@@ -96,34 +91,25 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
       double deltaError = error - lastError;
       double command = 0.0;
 
-      if (setpoint > 100 && setpoint < 170) {
+      if (setpoint > 80 && setpoint < 140) { // 80 < setpoint < 140
         // carriage is help in place in the from position, requires PID controller
         errorSum += error * REFRESH_RATE;
         command = error * kP_HOLD_CONSTANT + errorSum * kI_HOLD_CONSTANT + deltaError * kD_HOLD_CONSTANT;
         lastError = error;
 
-      } else if (setpoint < 80 || setpoint > 170) {
+      } else {
         // turns the controller off when on the hard stop
         command = 0.0;
         errorSum = 0.0;
         lastError = 0.0;
-
-      } else {
-        // the setpoint is around 90 deg, so the carriage acts as an inverted pendulum
-        // only requires P and D gains to stabilize
-        errorSum = error * REFRESH_RATE;
-        command = error * kP_HOLD_CONSTANT + errorSum * kI_HOLD_CONSTANT + deltaError * kD_HOLD_CONSTANT;
-        lastError = error;
       }
 
-      swingMotor.set(ControlMode.PercentOutput, command);
+      swingMotor.pidWrite(command);
       break;
 
     case MOVING:
-      //solenoids are automatically stowed in the Robot.java class, since constant
-      //back and forth firing will drop game elements
 
-      setSpeeds(0.0, 0.0);
+      //runIntake(0.0);
 
       // moves the carriage to desired setpoint via motion profiling
       carriageController.calculate();
@@ -139,17 +125,6 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
       break;
     }
 
-  }
-
-  /**
-   * sets the speeds for the arm motors at the same time
-   * 
-   * @param left  drive speed for the left motor controller
-   * @param right drive speed for the right motor controller
-   */
-  public void setSpeeds(double left, double right) {
-    leftMotor.set(ControlMode.PercentOutput, left);
-    rightMotor.set(ControlMode.PercentOutput, right);
   }
 
   /**
@@ -177,9 +152,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    * Flips the carriage to the front position
    */
   public void frontPosition() {
-    if (getCurrentOrientation() == false) {
       swingCarriage(FRONT_POSITION);
-    }
   }
 
   /**
@@ -206,12 +179,12 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   }
 
   /**
-   * spins both carriage intake wheels
+   * spins carriage intake wheels
    * 
-   * @param speed The power at which to run the motors [-1,1]
+   * @param speed The power at which to run the motor [-1,1]
    */
-  public void spinArmWheels(double speed) {
-    setSpeeds(speed, speed);
+  public void runIntake(double speed) {
+    intakeMotor.set(ControlMode.PercentOutput, speed);
   }
 
   /**
@@ -263,47 +236,19 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    * Opens the BCV finger to grab the hatch Can only extend when arms are open
    */
   public void openBCV() {
-    bcvFingers.set(true);
+    bcvFingers.set(false);
   }
 
   /**
    * Closes BCV fingers to release hatch
    */
   public void closeBCV() {
-    bcvFingers.set(false);
+    bcvFingers.set(true);
   }
 
   public void toggleBCV() {
     boolean curr = bcvFingers.get();
     bcvFingers.set(!curr);
-  }
-
-  /**
-   * Extends the slide outwards
-   */
-  public void extendBCV() {
-    bcvExtender.set(true);
-  }
-
-  /**
-   * Retracts the slide back in
-   */
-  public void retractBCV() {
-    bcvExtender.set(false);
-  }
-
-  /**
-   * Opens the intake arms to create space for the hatch
-   */
-  public void openArms() {
-    armPiston.set(true);
-  }
-
-  /**
-   * Closes intake arms to grip the cargo
-   */
-  public void closeArms() {
-    armPiston.set(false);
   }
 
   public void holdPosition() {
@@ -318,20 +263,11 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
     return carriagePot.get();
   }
 
-  /**
-   * REMOVE THIS METHOD AFTER TUNING IS FINISHED
-   * 
-   * @param setpoint
-   */
-  public void setCarriageSetpoint(double setpoint) {
-    this.setpoint = setpoint;
-    errorSum = 0.0;
-    lastError = 0.0;
+  public NemesisPotentiometer getPotentiometer() {
+    return carriagePot;
   }
 
   @Override
   public void initDefaultCommand() {
-    // Set the default command for a subsystem here.
-    // setDefaultCommand(new MySpecialCommand());
   }
 }

@@ -39,8 +39,8 @@ public interface RobotMap {
 
     // Carriage
     public static final int ARM_SOLENOID = 0;
-    public static final int BCV_EXTENDER_SOLENOID = 1;
-    public static final int BCV_FINGER_SOLENOID = 2;
+    public static final int BCV_EXTENDER_SOLENOID = 2;
+    public static final int BCV_FINGER_SOLENOID = 1;
 
     public static final int LEFT_CARRIAGE_MOTOR = 9;
     public static final int RIGHT_CARRIAGE_MOTOR = 10;

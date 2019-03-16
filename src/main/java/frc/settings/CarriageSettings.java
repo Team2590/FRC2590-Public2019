@@ -13,7 +13,7 @@ package frc.settings;
 public interface CarriageSettings {
 
     // Motion Profile Constants
-    public static final double CARRIAGE_KP = 0.05;
+    public static final double CARRIAGE_KP = 0.075; //0.05
     public static final double CARRIAGE_KI = 0.01;
     public static final double CARRIAGE_KV = 1.0 / 290.5; // 290.5 deg/s free speed under load
     public static final double CARRIAGE_KA = 0.0015;
@@ -30,5 +30,5 @@ public interface CarriageSettings {
     public static final double BACK_POSITION = 7.0; //not set to zero to that it doest overflow to 360
     public static final double HATCH_HANDOFF_POSITION = 0.0;
     public static final double UPRIGHT_POSITION = 90.0;
-    public static final double TOP_CARGO_POSITION = 130.0;
+    public static final double TOP_CARGO_POSITION = 135.0;
 }

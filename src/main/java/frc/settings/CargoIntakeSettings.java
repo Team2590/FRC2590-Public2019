@@ -13,7 +13,7 @@ package frc.settings;
 public interface CargoIntakeSettings {
 
     // Motion Profile / PID Constants
-    public static final double CARGO_INTAKE_KP = 0.055; //original p is 0.075
+    public static final double CARGO_INTAKE_KP = 0.055; // original p is 0.075
     public static final double CARGO_INTAKE_KI = 0.011;
     public static final double CARGO_INTAKE_KD = 0.0;
 
@@ -22,12 +22,13 @@ public interface CargoIntakeSettings {
 
     public static final double CARGO_INTAKE_MAX_VEL = 120.0;
     public static final double CARGO_INTAKE_MAX_ACC = 240.0;
-    public static final double CARGO_INTAKE_TOLERANCE = 3.0;
+    public static final double CARGO_INTAKE_TOLERANCE = 5.0;
 
-    public static final double kP_HOLD_CONSTANT = 0.025;// original was 0.025
-    public static final double kI_HOLD_CONSTANT = 0.0;// original value is .005
-    public static final double kD_HOLD_CONSTANT = 0.0;
+    public static final double kP_HOLD_CONSTANT = 0.02; // original was 0.025
+    public static final double kI_HOLD_CONSTANT = 0.0; // original value is .005
+    public static final double kD_HOLD_CONSTANT = 0.2; // original 0.3
+    public static final double kF_HOLD_CONSTANT = 0.0;
 
-    public static final double TOP_POSITION = 5.0; //change back to 5.0 deg
-    public static final double BOTTOM_POSITION = 55.0;
+    public static final double TOP_POSITION = 7.0; // change back to 5.0 deg
+    public static final double BOTTOM_POSITION = 68.0; // 65.0
 }

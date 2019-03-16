@@ -106,8 +106,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     leftDriveSlave.setInverted(true);
 
     // set the slave controllers to follow their respective masters(same side)
-    leftDriveSlave.follow(leftDriveMaster);
-    rightDriveSlave.follow(rightDriveMaster);
+    // leftDriveSlave.follow(leftDriveMaster);
+    // rightDriveSlave.follow(rightDriveMaster);
 
     // instantiates drive encoders from their NEO motors
     leftDriveEncoder = new NemesisCANEncoder(leftDriveMaster);
@@ -152,20 +152,20 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
     turnDone = true;
     driveStraightDone = true;
-    isHighGear = true;
+    isHighGear = false;
   }
 
   // updates the drivetrain's state with every iteration of teleopPeriodic()
   public void update() {
-    System.out.println("drive state " + driveState);
-    //System.out.println("gyro :" + gyro.getAngle());
+    // System.out.println("drive state " + driveState);
+    // System.out.println("gyro :" + gyro.getAngle());
     switch (driveState) {
     case STOPPED:
       setSpeeds(0, 0);
       break;
 
     case TELEOP_DRIVE:
-      //automaticGearShift();
+      // automaticGearShift();
       // arcade drive
       double out[] = driveSystem.calculate(straightPower, turnPower);
       setSpeeds(out[0], out[1]);
@@ -183,7 +183,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
       if (turnController.isDone()) {
         turnDone = true;
         driveState = States.TELEOP_DRIVE;
-      } 
+      }
       break;
 
     case DRIVE_STRAIGHT:
@@ -256,7 +256,10 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
    */
   public void setSpeeds(double leftSpeed, double rightSpeed) {
     leftDriveMaster.set(leftSpeed);
+    leftDriveSlave.set(leftSpeed);
+
     rightDriveMaster.set(rightSpeed);
+    rightDriveSlave.set(rightSpeed);
   }
 
   /**
@@ -269,12 +272,12 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     double robotSpeed = Math.abs((leftExternalEnc.getRate() + rightExternalEnc.getRate()) / 2);
 
     if (!isHighGear) { // currently low gear, upshifting
-      isHighGear = robotSpeed > MAX_LOW_GEAR_VELOCITY- 6.0;
+      isHighGear = robotSpeed > UPSHIFT_SPEED;
     } else { // currently high gear, downshifting
-      isHighGear = robotSpeed < (MAX_LOW_GEAR_VELOCITY - HYSTERESIS);
+      isHighGear = robotSpeed < DOWNSHIFT_SPEED;
     }
 
-    System.out.println(isHighGear);
+    // System.out.println(isHighGear);
     shiftingPiston.set(isHighGear);
   }
 
@@ -291,6 +294,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
   // toggles between high and low gear
   public void toggleShift() {
+    System.out.println("Drive Gear :: " + !isHighGear);
     manualGearShift(!isHighGear);
   }
 
@@ -351,6 +355,10 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     rightDriveEncoder.setPosition(0.0);
     leftExternalEnc.reset();
     rightExternalEnc.reset();
+  }
+
+  public void forceTeleop() {
+    driveState = States.TELEOP_DRIVE;
   }
 
   public NemesisDrive getRobotDrive() {

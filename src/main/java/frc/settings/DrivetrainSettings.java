@@ -9,7 +9,10 @@ public interface DrivetrainSettings {
     // max speeds of the DT in ft/s, converted to in/s
     public static final double MAX_LOW_GEAR_VELOCITY = 5.53 * 12.0;
     public static final double MAX_HIGH_GEAR_VELOCITY = 15.75 * 12.0;
-    public static final double HYSTERESIS = 2.0 * 12.0;
+    public static final double UPSHIFT_SPEED = MAX_LOW_GEAR_VELOCITY - 6.0;
+    public static final double DOWNSHIFT_SPEED = MAX_LOW_GEAR_VELOCITY - 24.0; //hysteresis
+    public static final double UPSHIFT_CURRENT = 0.0;
+    public static final double DOWNSHIFT_CURRENT = 0.0;
 
     public static final double HIGH_GEAR_RATIO = 7.64;
     public static final double LOW_GEAR_RATIO = 15.71;

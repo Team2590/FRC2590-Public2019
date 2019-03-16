@@ -18,8 +18,8 @@ public interface ElevatorSettings {
     public static final double ELEVATOR_KV = 1.0 / 26.1; // 26.1 in/s free speed
     public static final double ELEVATOR_KA = 0.0003;
 
-    public static final double ELEVATOR_MAX_VEL = 25.0;
-    public static final double ELEVATOR_MAX_ACC = 50.0;
+    public static final double ELEVATOR_MAX_VEL = 25.0; //25.0
+    public static final double ELEVATOR_MAX_ACC = 100.0; //50.0
     public static final double ELEVATOR_TOLERANCE = 2.0;
 
     public static final double ELEVATOR_HOLD_CONSTANT = 0.25;

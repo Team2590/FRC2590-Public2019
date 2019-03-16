@@ -13,18 +13,17 @@ package frc.settings;
 public interface FieldSettings {
 
     // setpoints for the hatch heights on the Rocket Ship
-    public static final double ROCKET_LOW_HATCH = 9.5;
-    public static final double ROCKET_MID_HATCH = 37.5;
-    public static final double ROCKET_HIGH_HATCH = 60.5; // should be 75, lower for testing purposes
+    public static final double ROCKET_LOW_HATCH = 4.5;
+    public static final double ROCKET_MID_HATCH = 32.5;
+    public static final double ROCKET_HIGH_HATCH = 64.0; // should be 75, lower for testing purposes
 
     // setpoints for the cargo heights on the Rocket Ship
-    public static final double ROCKET_LOW_CARGO = 15.5;
-    public static final double ROCKET_MID_CARGO = 43.5;
-    public static final double ROCKET_HIGH_CARGO = 59.5; // should be 75, lower for testing purposes
+    public static final double ROCKET_LOW_CARGO = 9.5;
+    public static final double ROCKET_MID_CARGO = 38.0;
+    public static final double ROCKET_HIGH_CARGO = 64.0; // should be 75, lower for testing purposes
 
-    // setpoints for the hatch and cargo heights on the Cargo Ship
-    public static final double CARGO_SHIP_HATCH = 0.0;
-    public static final double CARGO_SHIP_CARGO = 0.0;
+    // setpoint for feeder station
+    public static final double FEEDER_STATION = 35.5;
 
     // refresh rate for the Looper class
     public static final double REFRESH_RATE = 0.02; // 10ms
