@@ -109,8 +109,6 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
 
     case MOVING:
 
-      //runIntake(0.0);
-
       // moves the carriage to desired setpoint via motion profiling
       carriageController.calculate();
 

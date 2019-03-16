@@ -73,7 +73,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     enabledLooper = new Looper(REFRESH_RATE);
 
-    // add subsystems to the Looper holster
+    //add subsystems to the Looper holster
     enabledLooper.register(drivetrain::update);
     enabledLooper.register(carriage::update);
     enabledLooper.register(elevator::update);
@@ -287,13 +287,10 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     // Operator has the ability to move the carriage
     if (operatorJoystick.getRisingEdge(CARRIAGE_FRONT)) {
-      // hatchButtonMode = false;
       carriage.frontPosition();
     } else if (operatorJoystick.getRisingEdge(CARRIAGE_MIDDLE)) {
-      // hatchButtonMode = false;
       carriage.uprightPosition();
     } else if (operatorJoystick.getRisingEdge(CARRIAGE_BACK)) {
-      // hatchButtonMode = false;
       carriage.backPosition();
     }
 

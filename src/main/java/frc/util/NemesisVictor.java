@@ -94,8 +94,8 @@ public class NemesisVictor extends VictorSPX implements PIDOutput {
         if(totalTime == 0) {
             motorHeat = 0.0;
         }
-        System.out.printf("heat total %.02f heat threshold %.02f pdp current %.02f\n", Math.pow(motorHeat, 0.5),
-                Math.pow(heatThreshold, 0.5), currentCurrent);
+        // System.out.printf("heat total %.02f heat threshold %.02f pdp current %.02f\n", Math.pow(motorHeat, 0.5),
+        //         Math.pow(heatThreshold, 0.5), currentCurrent);
         return (motorHeat > heatThreshold);
     }
 

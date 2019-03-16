@@ -46,9 +46,10 @@ public class NemesisPotentiometer extends AnalogPotentiometer {
      * @return rotational rate
      */
     public double getRate(){
-        double rate = (get() - lastAngle) / (Timer.getFPGATimestamp() - lastTime);
+        double current = Timer.getFPGATimestamp();
+        double rate = (get() - lastAngle) / (current - lastTime);
         lastAngle = get();
-        lastTime = Timer.getFPGATimestamp();
+        lastTime = current;
         return rate;
     }
 
