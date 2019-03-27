@@ -31,11 +31,12 @@ public interface ButtonMap {
     public static final int ELEVATOR_GROUND = 3;
 
     // Operator Joystick
-    
-    public static final int ELEVATOR_CARGO_SHIP = 1;
-    public static final int FORCE_TELEOP = 2;
+    public static final int CLIMBER_AND_ELEVATOR = 1;
+    public static final int CLIMBER_INTAKE = 2;
+    public static final int ELEVATOR_CARGO_SHIP = 3;
     public static final int CARRIAGE_FRONT = 4;
     public static final int CARRIAGE_MIDDLE = 5;
     public static final int CARRIAGE_BACK = 6;
+    public static final int FORCE_TELEOP = 7;
 
 }

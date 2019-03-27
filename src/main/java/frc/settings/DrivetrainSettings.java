@@ -34,8 +34,8 @@ public interface DrivetrainSettings {
     public static final double DRIVETRAIN_KA = 0.0;
 
     // gains for turning in place
-    public static final double TURN_KP = 0.008;
-    public static final double TURN_KI = 0.0005;
+    public static final double TURN_KP = 0.009;
+    public static final double TURN_KI = 0.00225;
     public static final double TURN_KD = 0.0001;
-    public static final double TURN_TOLERANCE = 4.0;
+    public static final double TURN_TOLERANCE = 2.0;
 }

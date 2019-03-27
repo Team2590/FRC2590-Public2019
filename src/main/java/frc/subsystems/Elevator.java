@@ -96,7 +96,7 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     case STOPPED:
       // proportional error calcualtion
       double power = (setpoint - getHeight()) * ELEVATOR_HOLD_CONSTANT;
-      if (getHeight() < 5) {
+      if (Math.abs(getHeight()) < 2.0) { //allows elevator to hold position even when encoder is negative
         power = 0.0;
       }
 

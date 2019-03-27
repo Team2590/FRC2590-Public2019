@@ -160,6 +160,7 @@ public class MotionProfile implements Controller {
     public void calculate() {
         if (!done) {
             double currentPos = getSourceDistance();
+            //double currentVel = getSourceRate();
             double output_position = 0.0;
             double output_velocity = 0.0;
             double output_acceleration = 0.0;
@@ -190,18 +191,16 @@ public class MotionProfile implements Controller {
             // kV and kA are feedforward, kP and kI are feedback
             double command = kV * output_velocity + kA * output_acceleration + kP * error + kI * errorSum;
 
-            // profile is finished, output 0.0 to motors and exit
-            // if (Math.abs(endPoint - currentPos) < tolerance) {
-            //     done = true;
-            //     command = 0.0;
-            // }
+            //ends controller if the total number of steps have been reached
             if(count >= totalSteps) {
                 done = true;
                 command = 0.0;
             }
 
+            //System.out.printf("%.02f %.02f %.02f %.02f %.02f \n", count*dt, output_position, currentPos, output_velocity, currentVel);
             // System.out.println(
-            //          count * dt + " " + output_position + " " + currentPos + " " + output_velocity + " " + command);
+            // count * dt + " " + output_position + " " + currentPos + " " + output_velocity
+            // + " " + command);
             output.pidWrite(command);
         }
     }

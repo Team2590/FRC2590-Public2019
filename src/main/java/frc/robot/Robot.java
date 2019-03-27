@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.looper.Looper;
 import frc.settings.FieldSettings;
 import frc.subsystems.Carriage;
+import frc.subsystems.Climber;
 import frc.subsystems.Drivetrain;
 import frc.subsystems.Elevator;
 import frc.util.Limelight;
@@ -29,6 +30,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
   private static Drivetrain drivetrain;
   private static Carriage carriage;
   private static Elevator elevator;
+  private static Climber climber;
 
   // PDP for current draw purposes
   private PowerDistributionPanel pdp;
@@ -62,6 +64,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     drivetrain = Drivetrain.getDrivetrainInstance();
     carriage = Carriage.getCarriageInstance();
     elevator = Elevator.getElevatorInstance();
+    climber = Climber.getClimberInstance();
 
     pdp = new PowerDistributionPanel();
 
@@ -73,10 +76,12 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     enabledLooper = new Looper(REFRESH_RATE);
 
-    //add subsystems to the Looper holster
+    // add subsystems to the Looper holster
     enabledLooper.register(drivetrain::update);
+    //pjw
     enabledLooper.register(carriage::update);
     enabledLooper.register(elevator::update);
+    enabledLooper.register(climber::update);
 
     // instantiates compressor
     compressor = new Compressor();
@@ -106,9 +111,9 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
   @Override
   public void autonomousPeriodic() {
 
-    if (drivetrain.isTurnDone()) {
+    //if (drivetrain.isTurnDone()) {
       drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
-    }
+    //}
 
     // manual shifting
     if (leftJoystick.getRisingEdge(UPSHIFT)) {
@@ -125,9 +130,9 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     }
 
     if (rightJoystick.getPOV() == 0) {
-      elevator.moveManually(.25);
+      elevator.moveManually(.5);
     } else if (rightJoystick.getPOV() == 180) {
-      elevator.moveManually(-.25);
+      elevator.moveManually(-.5);
     }
 
     // Operator has the ability to move the carriage
@@ -249,20 +254,20 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
   @Override
   public void teleopPeriodic() {
 
-    /**
-     * Useful print statements for measurement/calibration
-     */
-    // System.out.println("Carriage :: " + carriage.getAngle());
-    // System.out.println("Elevator Encoder :: " + elevator.getHeight());
-
-    // double kp = SmartDashboard.getNumber("DB/Slider 1", 0.025);
-    // double kd = SmartDashboard.getNumber("DB/Slider 2", 0.0);
+    // SmartDashboard.putNumber("Carriage Potentiometer", carriage.getAngle());
+    // SmartDashboard.putNumber("Climber Potentiometer", climber.getAngle());
+    // SmartDashboard.putNumber("Drivetrain Current Draw",
+    // drivetrain.getAverageCurrentDraw());
 
     // This logic checks if the robot is still turning, to avoid switching states to
     // teleop in the middle of the control loop
     // Also prevents driver from moving the robot while it auto aligns
     if (drivetrain.isTurnDone()) {
       drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
+    }
+
+    if (operatorJoystick.getRisingEdge(FORCE_TELEOP)) {
+      drivetrain.forceTeleop();
     }
 
     // manual shifting
@@ -280,9 +285,9 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     }
 
     if (rightJoystick.getPOV() == 0) {
-      elevator.moveManually(.25);
+      elevator.moveManually(.5);
     } else if (rightJoystick.getPOV() == 180) {
-      elevator.moveManually(-.25);
+      elevator.moveManually(-.5);
     }
 
     // Operator has the ability to move the carriage
@@ -294,8 +299,20 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       carriage.backPosition();
     }
 
-    if (operatorJoystick.getRisingEdge(FORCE_TELEOP)) {
-      drivetrain.forceTeleop();
+    if(operatorJoystick.getPOV() == 0) {
+      climber.moveManually(0.6);
+    } else if(operatorJoystick.getPOV() == 180) {
+      climber.moveManually(-0.6);
+    }
+
+    if(operatorJoystick.getRawButton(CLIMBER_AND_ELEVATOR)) {
+      elevator.moveManually(-0.5);
+    }
+
+    if(operatorJoystick.getRawButton(CLIMBER_INTAKE)) {
+      climber.intakeClimber();
+    } else {
+      climber.stopIntake();
     }
 
     // Switches between Hatch Mode and Ball Mode
@@ -409,6 +426,10 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
   public static Elevator getElevatorInstance() {
     return elevator;
+  }
+
+  public static Climber getClimberInstance() {
+    return climber;
   }
 
   public static Limelight getLimelightInstance() {

@@ -59,8 +59,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   public Carriage() {
     bcvFingers = new Solenoid(BCV_FINGER_SOLENOID);
 
-    intakeMotor = new NemesisVictor(RIGHT_CARRIAGE_MOTOR);
-    //swingMotor = new NemesisVictor(SWING_CARRIAGE_MOTOR);
+    intakeMotor = new NemesisVictor(INTAKE_CARRIAGE_MOTOR);
     swingMotor = new NemesisVictor(SWING_CARRIAGE_MOTOR, 6, true, 5.0, 10);
 
     intakeMotor.setInverted(false);
@@ -68,7 +67,6 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
 
     carriagePot = new NemesisPotentiometer(CARRIAGE_POTENTIOMETER, 360.0);
     carriagePot.setSlipLimit(270.0);
-    carriagePot.setName("Carriage Potentiometer");
 
     carriageController = new MotionProfile(CARRIAGE_KP, CARRIAGE_KI, CARRIAGE_KV, CARRIAGE_KA, CARRIAGE_MAX_VEL,
         CARRIAGE_MAX_ACC, CARRIAGE_TOLERANCE, carriagePot, swingMotor);
@@ -82,7 +80,6 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   }
 
   public void update() {
-    //System.out.println(carriageState);
     switch (carriageState) {
 
     case STOPPED:

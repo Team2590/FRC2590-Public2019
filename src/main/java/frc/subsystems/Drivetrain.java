@@ -14,6 +14,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.controllers.MotionProfile;
@@ -75,6 +76,9 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   // Gyro sensor for reading the robots heading
   private AnalogGyro gyro;
 
+  // PDP for monitoring current draw
+  private PowerDistributionPanel pdp;
+
   // Built-in PID controllers to linearize each drivetrain side
   private CANPIDController leftDriveLinearizer;
   private CANPIDController rightDriveLinearizer;
@@ -129,6 +133,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     shiftingPiston = new Solenoid(GEAR_SHIFT_SOLENOID);
 
     gyro = new AnalogGyro(DRIVETRAIN_GYRO);
+
+    pdp = new PowerDistributionPanel();
 
     // PID drive linearizers
     // leftDriveLinearizer = new CANPIDController(leftDriveMaster);
@@ -272,7 +278,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     double robotSpeed = Math.abs((leftExternalEnc.getRate() + rightExternalEnc.getRate()) / 2);
 
     if (!isHighGear) { // currently low gear, upshifting
-      isHighGear = robotSpeed > UPSHIFT_SPEED;
+      isHighGear = robotSpeed > UPSHIFT_SPEED; // current calculations should flip the logic
     } else { // currently high gear, downshifting
       isHighGear = robotSpeed < DOWNSHIFT_SPEED;
     }
@@ -358,7 +364,16 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   }
 
   public void forceTeleop() {
+    turnController.setDone();
+    turnDone = true;
     driveState = States.TELEOP_DRIVE;
+  }
+
+  /**
+   * @return The average current draw between the four drive motors
+   */
+  public double getAverageCurrentDraw() {
+    return (pdp.getCurrent(LM_PWM) + pdp.getCurrent(LS_PWM) + pdp.getCurrent(RM_PWM) + pdp.getCurrent(RS_PWM) / 4.0);
   }
 
   public NemesisDrive getRobotDrive() {
