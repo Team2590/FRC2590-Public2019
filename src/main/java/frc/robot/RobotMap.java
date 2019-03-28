@@ -46,11 +46,11 @@ public interface RobotMap {
     public static final int ELEVATOR_ENCODER_A = 0;
     public static final int ELEVATOR_ENCODER_B = 1;
 
+    public static final int ELEVATOR_HARDSTOP_SOLENOID = 6;
+
     /**
      * Carriage
      */
-    public static final int ARM_SOLENOID = 1;
-    public static final int BCV_EXTENDER_SOLENOID = 0;
     public static final int BCV_FINGER_SOLENOID = 2;
 
     public static final int INTAKE_CARRIAGE_MOTOR = 10;

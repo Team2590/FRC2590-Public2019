@@ -78,7 +78,6 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     // add subsystems to the Looper holster
     enabledLooper.register(drivetrain::update);
-    //pjw
     enabledLooper.register(carriage::update);
     enabledLooper.register(elevator::update);
     enabledLooper.register(climber::update);
@@ -111,9 +110,9 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
   @Override
   public void autonomousPeriodic() {
 
-    //if (drivetrain.isTurnDone()) {
-      drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
-    //}
+    // if (drivetrain.isTurnDone()) {
+    drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
+    // }
 
     // manual shifting
     if (leftJoystick.getRisingEdge(UPSHIFT)) {
@@ -254,8 +253,9 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
   @Override
   public void teleopPeriodic() {
 
-    // SmartDashboard.putNumber("Carriage Potentiometer", carriage.getAngle());
-    // SmartDashboard.putNumber("Climber Potentiometer", climber.getAngle());
+    // System.out.println("Carriage " + carriage.getAngle());
+    // System.out.println("Elev " + elevator.getHeight());
+    // SmartDashboard.putNumber("carriage", carriage.getAngle());
     // SmartDashboard.putNumber("Drivetrain Current Draw",
     // drivetrain.getAverageCurrentDraw());
 
@@ -284,6 +284,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       drivetrain.turn(drivetrain.getHeading() + limelight.horizontalAngleToTarget());
     }
 
+    // moving the elevator manually
     if (rightJoystick.getPOV() == 0) {
       elevator.moveManually(.5);
     } else if (rightJoystick.getPOV() == 180) {
@@ -299,17 +300,46 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       carriage.backPosition();
     }
 
-    if(operatorJoystick.getPOV() == 0) {
-      climber.moveManually(0.6);
-    } else if(operatorJoystick.getPOV() == 180) {
-      climber.moveManually(-0.6);
+    // moving the climber arm manually
+    if (operatorJoystick.getPOV() == 0) {
+      climber.moveManually(0.5);
+    } else if (operatorJoystick.getPOV() == 180) {
+      climber.moveManually(-0.5);
     }
 
-    if(operatorJoystick.getRawButton(CLIMBER_AND_ELEVATOR)) {
-      elevator.moveManually(-0.5);
+    // moves carriage and elevator to latch position, waiting to engage
+    if (operatorJoystick.getRisingEdge(CARRIAGE_LATCH)) {
+      carriage.uprightPosition();
+      elevator.startDelay();
+      carriage.startDelay();
+    } else {
+      // if the elevator has iterated 75 cycles (1.5 sec) in delay
+      if (elevator.getDelayCount() > 75 && elevator.getDelayState()) {
+        elevator.stopDelay();
+        elevator.moveSmooth(LATCH_HEIGHT);
+      } else if (elevator.getDelayState()) {
+        elevator.incrementCounter();
+      }
+
+      // delay for the carriage engaging the lock (3.5 seconds from button press)
+      if (carriage.getDelayCount() > 150 && carriage.getDelayState()) {
+        carriage.stopDelay();
+        carriage.latchPosition();
+        carriage.stopHoldConstant(); // prevents motor from applyign power when latched
+      } else if (carriage.getDelayState()) {
+        carriage.incrementCounter();
+      }
+
     }
 
-    if(operatorJoystick.getRawButton(CLIMBER_INTAKE)) {
+    // runs the elevator and climber arm downwards simultaneously
+    if (operatorJoystick.getRawButton(CLIMBER_AND_ELEVATOR)) {
+      elevator.moveManually(-0.6);
+      climber.moveManually(0.5);
+    }
+
+    // runs the intake wheels on the climber arm
+    if (operatorJoystick.getRawButton(CLIMBER_INTAKE)) {
       climber.intakeClimber();
     } else {
       climber.stopIntake();

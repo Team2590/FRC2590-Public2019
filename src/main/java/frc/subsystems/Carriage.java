@@ -54,7 +54,8 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   private double lastError;
 
   private boolean isInDelay;
-  private double counter;
+  private boolean cutPower;
+  private int delayCounter;
 
   public Carriage() {
     bcvFingers = new Solenoid(BCV_FINGER_SOLENOID);
@@ -77,6 +78,8 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
     lastError = 0.0;
 
     isInDelay = false;
+    cutPower = false;
+    delayCounter = 0;
   }
 
   public void update() {
@@ -88,11 +91,14 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
       double deltaError = error - lastError;
       double command = 0.0;
 
-      if (setpoint > 80 && setpoint < 140) { // 80 < setpoint < 140
-        // carriage is help in place in the from position, requires PID controller
+      if (setpoint > 30 && setpoint < 140) { // 30 < setpoint < 140
+        // carriage is held in place, requires PID controller
         errorSum += error * REFRESH_RATE;
         command = error * kP_HOLD_CONSTANT + errorSum * kI_HOLD_CONSTANT + deltaError * kD_HOLD_CONSTANT;
         lastError = error;
+
+        //if power is cut, sets command to 0.0 regardless of setpoint
+        if(cutPower) command = 0.0;
 
       } else {
         // turns the controller off when on the hard stop
@@ -151,11 +157,10 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   }
 
   /**
-   * Flips the carriage the hatch-handoff position This is tilted downwards from
-   * the front position
+   * Flips the carriage to the latch position on the elevator
    */
-  public void hatchHandoffPosition() {
-    swingCarriage(HATCH_HANDOFF_POSITION);
+  public void latchPosition() {
+    swingCarriage(LATCH_POSITION);
   }
 
   /**
@@ -205,26 +210,22 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
     return isInDelay;
   }
 
-  public double getCount() {
-    return counter;
-  }
-
-  public boolean isMoving() {
-    return carriageState == States.MOVING;
+  public int getDelayCount() {
+    return delayCounter;
   }
 
   public void startDelay() {
-    counter = 0;
+    delayCounter = 0;
     isInDelay = true;
   }
 
-  public void incrementCounter() {
-    counter += 1;
+  public void stopDelay() {
+    delayCounter = 0;
+    isInDelay = false;
   }
 
-  public void stopDelay() {
-    isInDelay = false;
-    counter = 0;
+  public void incrementCounter() {
+    delayCounter++;
   }
 
   /**
@@ -249,6 +250,10 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   public void holdPosition() {
     carriageController.endProfile();
     carriageState = States.STOPPED;
+  }
+
+  public void stopHoldConstant() {
+    cutPower = true;
   }
 
   /**

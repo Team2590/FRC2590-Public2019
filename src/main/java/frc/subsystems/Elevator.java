@@ -12,7 +12,7 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Encoder;
-
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.controllers.ConstantCurrent;
 import frc.controllers.MotionProfile;
@@ -53,6 +53,8 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
   private Encoder externalEncoder;
 
+  private Solenoid hardstop;
+
   // Motion profile controller to move elevator smoothly and accurately
   private MotionProfile elevatorController;
 
@@ -62,6 +64,8 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
   private double setpoint;
 
   private boolean manual;
+  private boolean isInDelay;
+  private int delayCounter;
 
   public Elevator() {
     elevatorMotor = new CANSparkMax(ELEVATOR_MOTOR, MotorType.kBrushless);
@@ -70,12 +74,14 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
     externalEncoder = new Encoder(ELEVATOR_ENCODER_A, ELEVATOR_ENCODER_B);
 
+    hardstop = new Solenoid(ELEVATOR_HARDSTOP_SOLENOID);
+    hardstop.set(false);
+
     setConversionFactors();
     elevatorEncoder.setScaling(1.13);
     failSafeEncoder.setScaling(1.13);
 
     externalEncoder.setName("Elevator Encoder");
-    //externalEncoder.reset();
 
     elevatorMotor.setIdleMode(IdleMode.kBrake);
 
@@ -87,6 +93,8 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     setpoint = 0.0;
 
     manual = false;
+    isInDelay = false;
+    delayCounter = 0;
   }
 
   // called every loop of teleop periodic
@@ -96,7 +104,7 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     case STOPPED:
       // proportional error calcualtion
       double power = (setpoint - getHeight()) * ELEVATOR_HOLD_CONSTANT;
-      if (Math.abs(getHeight()) < 2.0) { //allows elevator to hold position even when encoder is negative
+      if (Math.abs(getHeight()) < 2.0) { // allows elevator to hold position even when encoder is negative
         power = 0.0;
       }
 
@@ -151,10 +159,20 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     failSafeEncoder.setPositionConversionFactor((Math.PI / GEAR_RATIO));
 
     externalEncoder.setDistancePerPulse(0.001238);
-   
+
     // converts from RPM to velocity (in/s)
     elevatorEncoder.setVelocityConversionFactor(Math.PI / (GEAR_RATIO * 60.0));
     failSafeEncoder.setVelocityConversionFactor(Math.PI / (GEAR_RATIO * 60.0));
+  }
+
+  public void setProfileFast() {
+    elevatorController.setMaxVel(ELEVATOR_MAX_VEL);
+    elevatorController.setMaxAcc(ELEVATOR_MAX_ACC);
+  }
+
+  public void setProfileSlow() {
+    elevatorController.setMaxVel(ELEVATOR_SLOW_VEL);
+    elevatorController.setMaxAcc(ELEVATOR_SLOW_ACC);
   }
 
   public double getHeight() {
@@ -163,6 +181,36 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
   public void stopElevator() {
     elevatorState = States.STOPPED;
+  }
+
+  public void disableHardstop() {
+    hardstop.set(true);
+  }
+
+  public void enableHardstop() {
+    hardstop.set(false);
+  }
+
+  public boolean getDelayState() {
+    return isInDelay;
+  }
+
+  public int getDelayCount() {
+    return delayCounter;
+  }
+
+  public void startDelay() {
+    delayCounter = 0;
+    isInDelay = true;
+  }
+
+  public void stopDelay() {
+    delayCounter = 0;
+    isInDelay = false;
+  }
+
+  public void incrementCounter() {
+    delayCounter++;
   }
 
   @Override

@@ -197,7 +197,7 @@ public class MotionProfile implements Controller {
                 command = 0.0;
             }
 
-            //System.out.printf("%.02f %.02f %.02f %.02f %.02f \n", count*dt, output_position, currentPos, output_velocity, currentVel);
+            System.out.printf("%.02f %.02f %.02f %.02f \n", count*dt, output_position, currentPos, output_velocity);
             // System.out.println(
             // count * dt + " " + output_position + " " + currentPos + " " + output_velocity
             // + " " + command);
@@ -220,6 +220,22 @@ public class MotionProfile implements Controller {
         i1 = 0;
         i2 = 0;
         done = true;
+    }
+
+    /**
+     * Change the max velocity of the profile 
+     * @param maxVel new max velocity
+     */
+    public void setMaxVel(double maxVel) {
+        this.maxVel = maxVel;
+    }
+
+    /**
+     * Change the max acceleration of the profile
+     * @param maxAcc new max acceleration
+     */
+    public void setMaxAcc(double maxAcc) {
+        this.maxAcc = maxAcc;
     }
 
     /**

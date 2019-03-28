@@ -37,6 +37,7 @@ public interface ButtonMap {
     public static final int CARRIAGE_FRONT = 4;
     public static final int CARRIAGE_MIDDLE = 5;
     public static final int CARRIAGE_BACK = 6;
-    public static final int FORCE_TELEOP = 7;
+    public static final int CARRIAGE_LATCH = 7;
+    public static final int FORCE_TELEOP = 9;
 
 }

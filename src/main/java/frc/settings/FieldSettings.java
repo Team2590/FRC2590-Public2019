@@ -15,7 +15,7 @@ public interface FieldSettings {
     // setpoints for the hatch heights on the Rocket Ship
     public static final double ROCKET_LOW_HATCH = 3.0;
     public static final double ROCKET_MID_HATCH = 32.5;
-    public static final double ROCKET_HIGH_HATCH = 64.0; // should be 75, lower for testing purposes
+    public static final double ROCKET_HIGH_HATCH = 62.0; // should be 75, lower for testing purposes
 
     // setpoints for the cargo heights on the Rocket Ship
     public static final double ROCKET_LOW_CARGO = 9.5;
@@ -24,6 +24,9 @@ public interface FieldSettings {
 
     // setpoint for feeder station
     public static final double FEEDER_STATION = 35.5;
+
+    // setpoint for latching the carriage
+    public static final double LATCH_HEIGHT = 20.0;
 
     // refresh rate for the Looper class
     public static final double REFRESH_RATE = 0.02; // 10ms
