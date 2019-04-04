@@ -72,7 +72,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
     carriageController = new MotionProfile(CARRIAGE_KP, CARRIAGE_KI, CARRIAGE_KV, CARRIAGE_KA, CARRIAGE_MAX_VEL,
         CARRIAGE_MAX_ACC, CARRIAGE_TOLERANCE, carriagePot, swingMotor);
 
-    setpoint = getAngle(); // should be set to getAngle(), set to 180 for testing purposes
+    setpoint = getAngle();
 
     errorSum = 0.0;
     lastError = 0.0;
@@ -91,14 +91,11 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
       double deltaError = error - lastError;
       double command = 0.0;
 
-      if (setpoint > 30 && setpoint < 140) { // 30 < setpoint < 140
+      if (setpoint > 30 && setpoint < 140 && !cutPower) { // 30 < setpoint < 140
         // carriage is held in place, requires PID controller
         errorSum += error * REFRESH_RATE;
         command = error * kP_HOLD_CONSTANT + errorSum * kI_HOLD_CONSTANT + deltaError * kD_HOLD_CONSTANT;
         lastError = error;
-
-        //if power is cut, sets command to 0.0 regardless of setpoint
-        if(cutPower) command = 0.0;
 
       } else {
         // turns the controller off when on the hard stop
@@ -153,7 +150,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    * Flips the carriage to the front position
    */
   public void frontPosition() {
-      swingCarriage(FRONT_POSITION);
+    swingCarriage(FRONT_POSITION);
   }
 
   /**

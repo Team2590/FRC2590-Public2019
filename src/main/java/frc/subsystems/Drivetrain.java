@@ -163,8 +163,6 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
   // updates the drivetrain's state with every iteration of teleopPeriodic()
   public void update() {
-    // System.out.println("drive state " + driveState);
-    // System.out.println("gyro :" + gyro.getAngle());
     switch (driveState) {
     case STOPPED:
       setSpeeds(0, 0);

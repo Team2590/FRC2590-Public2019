@@ -88,7 +88,7 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     elevatorController = new MotionProfile(ELEVATOR_KP, ELEVATOR_KI, ELEVATOR_KV, ELEVATOR_KA, ELEVATOR_MAX_VEL,
         ELEVATOR_MAX_ACC, ELEVATOR_TOLERANCE, externalEncoder, elevatorMotor);
 
-    manualController = new ConstantCurrent(elevatorMotor);
+    manualController = new ConstantCurrent(externalEncoder, elevatorMotor);
 
     setpoint = 0.0;
 

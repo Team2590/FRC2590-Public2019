@@ -23,8 +23,8 @@ import edu.wpi.first.wpilibj.Joystick;
   //rising and falling edge calculations
   private boolean lastTopUpVal = false;
   private boolean lastTopDownVal = false;
-  private boolean[] lastRisingVal = new boolean[10];
-  private boolean[] lastFallingVal = new boolean[10];
+  private boolean[] lastRisingVal = new boolean[13];
+  private boolean[] lastFallingVal = new boolean[13];
   
 
   /**

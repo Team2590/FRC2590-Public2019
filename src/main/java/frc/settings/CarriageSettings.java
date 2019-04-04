@@ -27,7 +27,7 @@ public interface CarriageSettings {
     public static final double kD_HOLD_CONSTANT = 0.0001; //0.0001
 
     public static final double FRONT_POSITION = 175.0;
-    public static final double BACK_POSITION = 7.0; //not set to zero to that it doest overflow to 360
+    public static final double BACK_POSITION = 20.0; //not set to zero to that it doest overflow to 360
     public static final double UPRIGHT_POSITION = 55.0;
     public static final double TOP_CARGO_POSITION = 135.0;
     public static final double LATCH_POSITION = 40.0;

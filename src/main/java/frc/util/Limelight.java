@@ -17,9 +17,9 @@ import edu.wpi.first.wpilibj.command.Subsystem;
  * 
  * @author Harsh Padhye, Chinmay Savanur
  * 
- * Access the Limelight web pipeline via: http://10.25.90.11:5801 
- * Access the Limelight camera feed via: http://10.25.90.11:5800
- * Access the Limelight IP camera in GRIP via: http://10.25.90.11:5802
+ *         Access the Limelight web pipeline via: http://10.25.90.11:5801 Access
+ *         the Limelight camera feed via: http://10.25.90.11:5800 Access the
+ *         Limelight IP camera in GRIP via: http://10.25.90.11:5802
  */
 public class Limelight extends Subsystem implements LimelightSettings {
 
@@ -37,21 +37,33 @@ public class Limelight extends Subsystem implements LimelightSettings {
   private NetworkTable table;
 
   // target coordinates and values
-  private double tx, ty, tz, tv;
+  private double tx, ty, tz, tv, tl;
+
+  private boolean limelightOn;
+
+  private boolean isInDelay;
+  private int delayCounter;
 
   public Limelight() {
     table = NetworkTableInstance.getDefault().getTable("limelight");
+    table.getEntry("pipeline").setNumber(3);
 
     tx = 0.0; // Horizontal Offset From Crosshair To Target (-27 degrees to 27 degrees)
     ty = 0.0; // Vertical Offset From Crosshair To Target (-20.5 degrees to 20.5 degrees)
     tz = 0.0; // distance from the camera to the target
     tv = 0.0; // whether the limelight has any valid targets (0 or 1)
+    tl = 0.0;
+
+    limelightOn = false;
+    isInDelay = false;
+    delayCounter = 0;
   }
 
   public void update() {
     tx = table.getEntry("tx").getDouble(0);
     ty = table.getEntry("ty").getDouble(0);
     tv = table.getEntry("tv").getDouble(0);
+    tl = table.getEntry("tl").getDouble(0);
   }
 
   /**
@@ -87,6 +99,42 @@ public class Limelight extends Subsystem implements LimelightSettings {
    */
   public double distanceToTarget() {
     return (HATCH_TARGET_HEIGHT - CAMERA_HEIGHT) / Math.tan(CAMERA_ANGLE + verticalAngleToTarget());
+  }
+
+  public boolean isLimelightOn() {
+    return limelightOn;
+  }
+
+  public void turnLimelightOn() {
+    table.getEntry("ledMode").setNumber(3);
+    limelightOn = true;
+  }
+
+  public void turnLimelightOff() {
+    table.getEntry("ledMode").setNumber(1);
+    limelightOn = false;
+  }
+
+  public boolean getDelayState() {
+    return isInDelay;
+  }
+
+  public int getDelayCount() {
+    return delayCounter;
+  }
+
+  public void startDelay() {
+    delayCounter = 0;
+    isInDelay = true;
+  }
+
+  public void stopDelay() {
+    delayCounter = 0;
+    isInDelay = false;
+  }
+
+  public void incrementCounter() {
+    delayCounter++;
   }
 
   @Override

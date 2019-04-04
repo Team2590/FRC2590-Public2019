@@ -10,7 +10,7 @@ public interface DrivetrainSettings {
     public static final double MAX_LOW_GEAR_VELOCITY = 5.53 * 12.0;
     public static final double MAX_HIGH_GEAR_VELOCITY = 15.75 * 12.0;
     public static final double UPSHIFT_SPEED = MAX_LOW_GEAR_VELOCITY - 6.0;
-    public static final double DOWNSHIFT_SPEED = MAX_LOW_GEAR_VELOCITY - 24.0; //hysteresis
+    public static final double DOWNSHIFT_SPEED = MAX_LOW_GEAR_VELOCITY - 24.0; // hysteresis
     public static final double UPSHIFT_CURRENT = 0.0;
     public static final double DOWNSHIFT_CURRENT = 0.0;
 
@@ -34,8 +34,8 @@ public interface DrivetrainSettings {
     public static final double DRIVETRAIN_KA = 0.0;
 
     // gains for turning in place
-    public static final double TURN_KP = 0.009;
-    public static final double TURN_KI = 0.00225;
-    public static final double TURN_KD = 0.0001;
+    public static final double TURN_KP = 0.008; // 0.009
+    public static final double TURN_KI = 0.00225; // 0.00225
+    public static final double TURN_KD = 0.0001; // 0.0001
     public static final double TURN_TOLERANCE = 2.0;
 }

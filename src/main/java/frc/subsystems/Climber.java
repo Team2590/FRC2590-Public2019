@@ -60,12 +60,16 @@ public class Climber implements ClimberSettings, FieldSettings, RobotMap {
 
         climberArticulateSlave.follow(climberArticulateMaster);
 
+        climberArticulateMaster.setInverted(true);
+        climberArticulateSlave.setInverted(false);
+
         climberPot = new NemesisPotentiometer(CLIMBER_POTENTIOMETER, 360.0);
+        climberPot.setSlipLimit(270.0);
 
         climberController = new MotionProfile(CLIMBER_KP, CLIMBER_KI, CLIMBER_KV, CLIMBER_KA, CLIMBER_MAX_VEL,
                 CLIMBER_MAX_ACC, CLIMBER_TOLERANCE, climberPot, climberArticulateMaster);
 
-        manualController = new ConstantCurrent(climberArticulateMaster);
+        manualController = new ConstantCurrent(climberPot, climberArticulateMaster);
 
         setpoint = getAngle();
         errorSum = 0.0;
