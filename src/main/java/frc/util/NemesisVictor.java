@@ -24,15 +24,17 @@ import edu.wpi.first.wpilibj.Timer;
  */
 public class NemesisVictor extends VictorSPX implements PIDOutput {
 
+    private Queue<Double> currentSum;
     private Queue<Double> heatSum;
     private Queue<Double> timeSum;
     private PowerDistributionPanel pdp;
     private int pdpChannel;
-    private double lastTime, totalHeat, lastCurrent, totalTime, rollingAvgTime, heatThreshold;
+    private double lastTime, totalHeat, lastCurrent, totalTime, rollingAvgTime, heatThreshold, totalCurrent;
     private boolean burnoutProtection, bpEnabled;
 
     public NemesisVictor(int device) {
         super(device);
+        currentSum = new LinkedList<>();
         heatSum = new LinkedList<>();
         timeSum = new LinkedList<>();
         pdp = new PowerDistributionPanel();
@@ -40,6 +42,7 @@ public class NemesisVictor extends VictorSPX implements PIDOutput {
         lastCurrent = 0.0;
         totalTime = 0.0;
         totalHeat = 0.0;
+        totalCurrent = 0.0;
         burnoutProtection = false;
         bpEnabled = false;
     }
@@ -55,7 +58,10 @@ public class NemesisVictor extends VictorSPX implements PIDOutput {
 
     @Override
     public void pidWrite(double output) {
-        if (!burnoutProtection || !checkCurrent()) {
+
+        checkCurrent();
+
+        if (!burnoutProtection || !checkMotorHeat()) {
             if (bpEnabled) {
                 bpEnabled = false;
                 System.out.printf("Burnout Protection Disabled for PDP Channel %d \n", pdpChannel);
@@ -71,24 +77,33 @@ public class NemesisVictor extends VictorSPX implements PIDOutput {
         }
     }
 
-    public boolean checkCurrent() {
+    public void checkCurrent() {
         double currentTime = Timer.getFPGATimestamp();
-        double currentCurrent = pdp.getCurrent(pdpChannel);
         double deltaT = currentTime - lastTime;
         timeSum.add(deltaT);
         totalTime += deltaT;
 
-        double heat = Math.abs(Math.pow(((currentCurrent + lastCurrent) / 2), 2) * deltaT);
+        double currentCurrent = pdp.getCurrent(pdpChannel);
+        double deltaCurrAvg = (currentCurrent + lastCurrent) / 2;
+        currentSum.add(currentCurrent);
+        totalCurrent += currentCurrent;
+
+        double heat = Math.abs(Math.pow(deltaCurrAvg, 2) * deltaT);
         heatSum.add(heat);
         totalHeat += heat;
 
         while (totalTime > rollingAvgTime) {
             totalTime -= timeSum.remove();
             totalHeat -= heatSum.remove();
+            totalCurrent -= currentSum.remove();
         }
 
         lastTime = currentTime;
         lastCurrent = currentCurrent;
+
+    }
+
+    public boolean checkMotorHeat() {
 
         double motorHeat = totalHeat / totalTime;
         if (totalTime == 0) {
@@ -98,6 +113,11 @@ public class NemesisVictor extends VictorSPX implements PIDOutput {
         // %.02f\n", Math.pow(motorHeat, 0.5),
         // Math.pow(heatThreshold, 0.5), currentCurrent);
         return (motorHeat > heatThreshold);
+    }
+
+    public double getAverageCurrent() {
+        double avgCurrent = (double) (totalCurrent / currentSum.size());
+        return avgCurrent;
     }
 
 }

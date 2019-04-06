@@ -7,8 +7,7 @@
 
 package frc.subsystems;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.controllers.MotionProfile;
@@ -40,6 +39,8 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
     STOPPED, MOVING
   }
 
+  private PowerDistributionPanel pdp;
+
   private Solenoid bcvFingers; // opens and closes the bicuspid valve
 
   private NemesisVictor intakeMotor;
@@ -58,10 +59,13 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   private int delayCounter;
 
   public Carriage() {
+    pdp = new PowerDistributionPanel();
+
     bcvFingers = new Solenoid(BCV_FINGER_SOLENOID);
 
-    intakeMotor = new NemesisVictor(INTAKE_CARRIAGE_MOTOR);
-    swingMotor = new NemesisVictor(SWING_CARRIAGE_MOTOR, 6, true, 5.0, 10);
+    //intakeMotor = new NemesisVictor(INTAKE_CARRIAGE_MOTOR);
+    intakeMotor = new NemesisVictor(INTAKE_CARRIAGE_MOTOR, 7, false, 0.25, CURRENT_LIMIT);
+    swingMotor = new NemesisVictor(SWING_CARRIAGE_MOTOR, 6, true, ROLL_AVG_TIME, CURRENT_LIMIT);
 
     intakeMotor.setInverted(false);
     swingMotor.setInverted(false);
@@ -83,6 +87,9 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   }
 
   public void update() {
+
+    //System.out.printf("Intake current %.02f Current Current %.02f \n", intakeMotor.getAverageCurrent(), pdp.getCurrent(7));
+
     switch (carriageState) {
 
     case STOPPED:
@@ -181,7 +188,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    * @param speed The power at which to run the motor [-1,1]
    */
   public void runIntake(double speed) {
-    intakeMotor.set(ControlMode.PercentOutput, speed);
+    intakeMotor.pidWrite(speed);
   }
 
   /**
@@ -190,7 +197,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    * @param speed The power at which to move the carriage [-1,1]
    */
   public void manualSwing(double speed) {
-    swingMotor.set(ControlMode.PercentOutput, speed);
+    swingMotor.pidWrite(speed);
     setpoint = getAngle();
   }
 
@@ -251,6 +258,10 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
 
   public void stopHoldConstant() {
     cutPower = true;
+  }
+
+  public boolean hasCargo() {
+    return (intakeMotor.getAverageCurrent() > 2.5 && intakeMotor.getAverageCurrent() < 4.0);
   }
 
   /**

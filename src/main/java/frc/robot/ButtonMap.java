@@ -30,7 +30,7 @@ public interface ButtonMap {
     public static final int ELEVATOR_HIGH = 4;
     public static final int ELEVATOR_GROUND = 3;
 
-    // Operator Joystick
+    // Operator Joystick (10 is dead)
     public static final int LEVEL_3_CLIMBER_AND_ELEVATOR = 1;
     public static final int CLIMBER_INTAKE = 2;
     public static final int ELEVATOR_CARGO_SHIP = 3;
@@ -41,7 +41,6 @@ public interface ButtonMap {
     public static final int ELEVATOR_HARDSTOP_DISABLE = 8;
     public static final int LEVEL_2_CLIMBER_AND_ELEVATOR = 9;
     public static final int FORCE_TELEOP = 10;
-    public static final int LIMELIGHT_ON = 11;
-    public static final int LIMELIGHT_OFF = 12;
+    public static final int FORCE_TELEOP_FAILSAFE = 11;
 
 }

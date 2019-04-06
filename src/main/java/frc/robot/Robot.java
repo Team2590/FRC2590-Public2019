@@ -16,6 +16,7 @@ import frc.subsystems.Carriage;
 import frc.subsystems.Climber;
 import frc.subsystems.Drivetrain;
 import frc.subsystems.Elevator;
+import frc.util.Delayer;
 import frc.util.Limelight;
 import frc.util.NemesisJoystick;
 
@@ -46,6 +47,9 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
   // Looper holster for multithreaded control of subsystems
   private Looper enabledLooper;
 
+  //Separate Delayers for subsystem functions
+  private Delayer intakeCurrentDelay;
+
   // controls if the elevator setpoints correlate to hatch heights or ball heights
   // true if hatch heights, false if cargo heights
   private boolean hatchButtonMode;
@@ -71,10 +75,9 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     // limelight camera
     limelight = Limelight.getLimelightInstance();
 
-    // camServer.addAxisCamera("10.25.90.11");
-    // camServer.startAutomaticCapture();
-
     enabledLooper = new Looper(REFRESH_RATE);
+
+    intakeCurrentDelay = new Delayer();
 
     // add subsystems to the Looper holster
     enabledLooper.register(drivetrain::update);
@@ -250,7 +253,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
   @Override
   public void teleopPeriodic() {
 
-    // System.out.println("Carriage " + carriage.getAngle());
+     //System.out.println("Carriage " + carriage.getAngle());
     // System.out.println("Elev " + elevator.getHeight());
     // System.out.println("climber " + climber.getAngle());
 
@@ -262,7 +265,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
     }
 
-    if (operatorJoystick.getRisingEdge(FORCE_TELEOP)) {
+    if (operatorJoystick.getRisingEdge(FORCE_TELEOP) || operatorJoystick.getRisingEdge(FORCE_TELEOP_FAILSAFE)) {
       drivetrain.forceTeleop();
     }
 
@@ -281,32 +284,9 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       drivetrain.turn(drivetrain.getHeading() + limelight.horizontalAngleToTarget());
     }
 
-    /*
-    //THIS IS FOR EXPERIMENTAL THING OF TURNING ON LIMELIGHT WITH BUTTON CLICK 
-    // Auto Align
-    // input the limelight reading once to avoid latency issues
-    if (leftJoystick.getRisingEdge(AUTO_ALIGN)) {
-      limelight.turnLimelightOn();
-      limelight.startDelay();
-    } else {
-      if (limelight.getDelayCount() > 5 && limelight.getDelayState()) {
-        limelight.stopDelay();
-        limelight.update();
-        drivetrain.turn(drivetrain.getHeading() + limelight.horizontalAngleToTarget());
-      } else if (limelight.getDelayState()) {
-        limelight.incrementCounter();
-      }
-    }*/
-
-    if (operatorJoystick.getRisingEdge(LIMELIGHT_ON) && !limelight.isLimelightOn()) {
-      limelight.turnLimelightOn();
-    } else if (operatorJoystick.getRisingEdge(LIMELIGHT_OFF) && limelight.isLimelightOn()) {
-      limelight.turnLimelightOff();
-    }
-
     // moving the elevator manually
     if (rightJoystick.getPOV() == 0) {
-      elevator.moveManually(1);
+      elevator.moveManually(0.75);
     } else if (rightJoystick.getPOV() == 180) {
       elevator.moveManually(-0.5);
     }
@@ -329,6 +309,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     // moves carriage and elevator to latch position, waiting to engage
     if (operatorJoystick.getRisingEdge(CARRIAGE_LATCH)) {
+      hatchButtonMode = true;
       carriage.uprightPosition();
       elevator.startDelay();
       carriage.startDelay();
@@ -410,8 +391,10 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       }
 
       if (rightJoystick.getRawButton(CLOSE_BCV)) {
+        limelight.turnLimelightOn();
         carriage.closeBCV();
       } else {
+        limelight.turnLimelightOff();
         carriage.openBCV();
       }
 
@@ -425,6 +408,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       // elevator setpoints
       // only allows driver to move elevator while the carriage is on the front
       if (carriage.getCurrentOrientation()) {
+
         if (rightJoystick.getRisingEdge(ELEVATOR_GROUND)) {
           carriage.frontPosition();
           elevator.moveSmooth(1.0);
@@ -450,6 +434,17 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       } else {
         // nominal current to retain ball
         carriage.runIntake(0.2);
+        
+      }
+
+      if(rightJoystick.getFallingEdge(BALL_INTAKE)) {
+        intakeCurrentDelay.startDelay(0.5);
+      }
+
+      if(intakeCurrentDelay.checkDelayStatus()) {
+        if(carriage.getCurrentOrientation() && elevator.isGrounded() && carriage.hasCargo()) {
+          elevator.moveSmooth(5.0);
+        }
       }
 
       if (operatorJoystick.getRisingEdge(ELEVATOR_CARGO_SHIP)) {

@@ -104,7 +104,7 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     case STOPPED:
       // proportional error calcualtion
       double power = (setpoint - getHeight()) * ELEVATOR_HOLD_CONSTANT;
-      if (Math.abs(getHeight()) < 2.0) { // allows elevator to hold position even when encoder is negative
+      if (isGrounded()) { // allows elevator to hold position even when encoder is negative
         power = 0.0;
       }
 
@@ -158,7 +158,7 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     elevatorEncoder.setPositionConversionFactor((Math.PI / GEAR_RATIO));
     failSafeEncoder.setPositionConversionFactor((Math.PI / GEAR_RATIO));
 
-    externalEncoder.setDistancePerPulse(0.001238);
+    externalEncoder.setDistancePerPulse(ENCODER_CONVERSION);
 
     // converts from RPM to velocity (in/s)
     elevatorEncoder.setVelocityConversionFactor(Math.PI / (GEAR_RATIO * 60.0));
@@ -177,6 +177,10 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
   public double getHeight() {
     return externalEncoder.getDistance();
+  }
+
+  public boolean isGrounded() {
+    return (Math.abs(getHeight()) < 2.0);
   }
 
   public void stopElevator() {

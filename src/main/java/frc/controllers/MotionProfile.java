@@ -133,7 +133,7 @@ public class MotionProfile implements Controller {
 
         // calculates the time required to follow the profile
         totalTime = (travelDistance / capMaxVel) + (capMaxVel / maxAcc);
-        totalSteps = (int)(totalTime / dt);
+        totalSteps = (int) (totalTime / dt);
 
         // calcualtes the accel and cruise distances
         accelDistance = (capMaxVel * capMaxVel) / (2 * maxAcc); // d = v^2 / 2a
@@ -160,7 +160,7 @@ public class MotionProfile implements Controller {
     public void calculate() {
         if (!done) {
             double currentPos = getSourceDistance();
-            //double currentVel = getSourceRate();
+            // double currentVel = getSourceRate();
             double output_position = 0.0;
             double output_velocity = 0.0;
             double output_acceleration = 0.0;
@@ -191,13 +191,14 @@ public class MotionProfile implements Controller {
             // kV and kA are feedforward, kP and kI are feedback
             double command = kV * output_velocity + kA * output_acceleration + kP * error + kI * errorSum;
 
-            //ends controller if the total number of steps have been reached
-            if(count >= totalSteps) {
+            // ends controller if the total number of steps have been reached
+            if (count >= totalSteps) {
                 done = true;
                 command = 0.0;
             }
 
-            //System.out.printf("%.02f %.02f %.02f %.02f \n", count*dt, output_position, currentPos, output_velocity);
+            // System.out.printf("%.02f %.02f %.02f %.02f \n", count*dt, output_position,
+            // currentPos, output_velocity);
             // System.out.println(
             // count * dt + " " + output_position + " " + currentPos + " " + output_velocity
             // + " " + command);
@@ -223,7 +224,8 @@ public class MotionProfile implements Controller {
     }
 
     /**
-     * Change the max velocity of the profile 
+     * Change the max velocity of the profile
+     * 
      * @param maxVel new max velocity
      */
     public void setMaxVel(double maxVel) {
@@ -232,6 +234,7 @@ public class MotionProfile implements Controller {
 
     /**
      * Change the max acceleration of the profile
+     * 
      * @param maxAcc new max acceleration
      */
     public void setMaxAcc(double maxAcc) {

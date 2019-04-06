@@ -13,7 +13,7 @@ package frc.settings;
 public interface FieldSettings {
 
     // setpoints for the hatch heights on the Rocket Ship
-    public static final double ROCKET_LOW_HATCH = 3.0;
+    public static final double ROCKET_LOW_HATCH = 3.5;
     public static final double ROCKET_MID_HATCH = 32.5;
     public static final double ROCKET_HIGH_HATCH = 62.0; // should be 75, lower for testing purposes
 

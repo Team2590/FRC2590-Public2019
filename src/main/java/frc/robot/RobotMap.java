@@ -51,7 +51,7 @@ public interface RobotMap {
     /**
      * Carriage
      */
-    public static final int BCV_FINGER_SOLENOID = 2; //1 for real bot, 2 for pbot
+    public static final int BCV_FINGER_SOLENOID = 1; //1 for real bot, 2 for pbot
 
     public static final int INTAKE_CARRIAGE_MOTOR = 10;
     public static final int SWING_CARRIAGE_MOTOR = 11;

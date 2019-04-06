@@ -31,4 +31,7 @@ public interface CarriageSettings {
     public static final double UPRIGHT_POSITION = 55.0;
     public static final double TOP_CARGO_POSITION = 135.0;
     public static final double LATCH_POSITION = 40.0;
+
+    public static final double CURRENT_LIMIT = 20.0;
+    public static final double ROLL_AVG_TIME = 5.0;
 }
