@@ -9,7 +9,6 @@ import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.looper.Looper;
 import frc.settings.FieldSettings;
 import frc.subsystems.Carriage;
@@ -47,7 +46,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
   // Looper holster for multithreaded control of subsystems
   private Looper enabledLooper;
 
-  //Separate Delayers for subsystem functions
+  // Separate Delayers for subsystem functions
   private Delayer intakeCurrentDelay;
 
   // controls if the elevator setpoints correlate to hatch heights or ball heights
@@ -113,6 +112,8 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
   @Override
   public void autonomousPeriodic() {
 
+    limelight.update();
+
     // if (drivetrain.isTurnDone()) {
     drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
     // }
@@ -124,11 +125,17 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       drivetrain.manualGearShift(false);
     }
 
-    // Auto Align
-    // input the limelight reading once to avoid latency issues
-    if (leftJoystick.getRisingEdge(AUTO_ALIGN)) {
-      limelight.update();
-      drivetrain.turn(drivetrain.getHeading() + limelight.horizontalAngleToTarget());
+    /*
+     * // Auto Align // input the limelight reading once to avoid latency issues if
+     * (leftJoystick.getRisingEdge(AUTO_ALIGN)) {
+     * drivetrain.turn(drivetrain.getHeading() +
+     * limelight.getHorizontalAngleToTarget()); }
+     */
+
+    // McKillip Drive
+    if (leftJoystick.getRawButton(AUTO_ALIGN)) {
+      drivetrain.guideSteering(-leftJoystick.getYBanded(), limelight.getCamTranZ(), limelight.getCamTranX(),
+          limelight.getCamTranYaw(), limelight.getHorizontalAngleToTarget());
     }
 
     if (rightJoystick.getPOV() == 0) {
@@ -252,8 +259,9 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
    */
   @Override
   public void teleopPeriodic() {
+    limelight.update();
 
-     //System.out.println("Carriage " + carriage.getAngle());
+    // System.out.println("Carriage " + carriage.getAngle());
     // System.out.println("Elev " + elevator.getHeight());
     // System.out.println("climber " + climber.getAngle());
 
@@ -271,17 +279,28 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     // manual shifting
     if (leftJoystick.getRisingEdge(UPSHIFT)) {
+      limelight.turnLimelightOff();
       drivetrain.manualGearShift(true);
     } else if (leftJoystick.getRisingEdge(DOWNSHIFT)) {
+      limelight.turnLimelightOn();
       drivetrain.manualGearShift(false);
     }
 
-    // Auto Align
-    // input the limelight reading once to avoid latency issues
-    if (leftJoystick.getRisingEdge(AUTO_ALIGN)) {
-      limelight.turnLimelightOn();
-      limelight.update();
-      drivetrain.turn(drivetrain.getHeading() + limelight.horizontalAngleToTarget());
+    /*
+     * // Auto Align // input the limelight reading once to avoid latency issues if
+     * (leftJoystick.getRisingEdge(AUTO_ALIGN)) { limelight.turnLimelightOn();
+     * drivetrain.turn(drivetrain.getHeading() +
+     * limelight.getHorizontalAngleToTarget()); }
+     */
+    // System.out.println("h = " + -limelight.getCamTranYaw() + " b = " +
+    // -limelight.getHorizontalAngleToTarget()
+    // + " a = " + (limelight.getHorizontalAngleToTarget() -
+    // limelight.getCamTranYaw()));
+
+    // McKillip Drive
+    if (leftJoystick.getRawButton(AUTO_ALIGN)) {
+      drivetrain.guideSteering(-leftJoystick.getYBanded(), limelight.getCamTranZ(), limelight.getCamTranX(),
+          limelight.getCamTranYaw(), limelight.getHorizontalAngleToTarget());
     }
 
     // moving the elevator manually
@@ -391,10 +410,10 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       }
 
       if (rightJoystick.getRawButton(CLOSE_BCV)) {
-        limelight.turnLimelightOn();
+        // limelight.turnLimelightOn();
         carriage.closeBCV();
       } else {
-        limelight.turnLimelightOff();
+        // limelight.turnLimelightOff();
         carriage.openBCV();
       }
 
@@ -434,15 +453,15 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       } else {
         // nominal current to retain ball
         carriage.runIntake(0.2);
-        
+
       }
 
-      if(rightJoystick.getFallingEdge(BALL_INTAKE)) {
+      if (rightJoystick.getFallingEdge(BALL_INTAKE)) {
         intakeCurrentDelay.startDelay(0.5);
       }
 
-      if(intakeCurrentDelay.checkDelayStatus()) {
-        if(carriage.getCurrentOrientation() && elevator.isGrounded() && carriage.hasCargo()) {
+      if (intakeCurrentDelay.checkDelayStatus()) {
+        if (carriage.getCurrentOrientation() && elevator.isGrounded() && carriage.hasCargo()) {
           elevator.moveSmooth(5.0);
         }
       }

@@ -14,11 +14,13 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.controllers.MotionProfile;
 import frc.controllers.PID;
+import frc.controllers.SteeringGuidance;
 import frc.robot.RobotMap;
 import frc.settings.DrivetrainSettings;
 import frc.util.NemesisCANEncoder;
@@ -46,7 +48,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   private States driveState = States.STOPPED;
 
   private enum States {
-    STOPPED, TELEOP_DRIVE, AUTON_DRIVE, PATH_FOLLOWING, TURN, DRIVE_STRAIGHT
+    STOPPED, TELEOP_DRIVE, GUIDE_STEERING, AUTON_DRIVE, PATH_FOLLOWING, TURN, DRIVE_STRAIGHT
   }
 
   // allows us to drive the robot via arcade drive
@@ -86,6 +88,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   // PID controller for turning in place
   private PID turnController;
 
+  private SteeringGuidance steeringGuidance;
+
   // Motion Profile controller for driving autonomously
   private MotionProfile leftDriveProfiler;
   private MotionProfile rightDriveProfiler;
@@ -98,6 +102,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   // finished its control loop
   private boolean turnDone, driveStraightDone;
   private boolean isHighGear;
+
+  private double z, x, yaw, horizontalOffset;
 
   public Drivetrain() {
 
@@ -145,7 +151,11 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     // rightDriveLinearizer.setP(RIGHT_LINEAR_KP);
     // rightDriveLinearizer.setI(RIGHT_LINEAR_KI);
 
+    PIDSource[] sources = { leftDriveEncoder, rightDriveEncoder };
+
     turnController = new PID(TURN_KP, TURN_KI, TURN_KD, TURN_TOLERANCE, gyro, dualMotorControllers);
+
+    steeringGuidance = new SteeringGuidance(STEERING_KP, STEERING_KI, STEERING_KD, sources);
 
     // 80 in/sec^2 arbitrary accel value to avoid syntax error
     leftDriveProfiler = new MotionProfile(DRIVETRAIN_KP, DRIVETRAIN_KI, DRIVETRAIN_KV, DRIVETRAIN_KA,
@@ -173,6 +183,17 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
       // arcade drive
       double out[] = driveSystem.calculate(straightPower, turnPower);
       setSpeeds(out[0], out[1]);
+
+      break;
+
+    case GUIDE_STEERING:
+      double steeringTurnPower = steeringGuidance.calculate(z, x, yaw, horizontalOffset);
+
+      System.out.println(yaw + " " + horizontalOffset + " " + (yaw - horizontalOffset) + " " + steeringTurnPower);
+
+      // replace turnPower with calculation from the steering guidance controller
+      double output[] = driveSystem.calculate(straightPower, steeringTurnPower);
+      setSpeeds(output[0], output[1]);
 
       break;
 
@@ -224,6 +245,17 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     straightPower = straight;
     turnPower = turn;
     driveState = States.TELEOP_DRIVE;
+  }
+
+  public void guideSteering(double straight, double z, double x, double yaw, double horizontalOffset) {
+    straightPower = straight;
+
+    this.z = z;
+    this.x = x;
+    this.yaw = yaw;
+    this.horizontalOffset = horizontalOffset;
+
+    driveState = States.GUIDE_STEERING;
   }
 
   /**

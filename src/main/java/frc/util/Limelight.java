@@ -37,12 +37,12 @@ public class Limelight extends Subsystem implements LimelightSettings {
   private NetworkTable table;
 
   // target coordinates and values
-  private double tx, ty, tz, tv, tl;
+  private double tx, ty, tv, ts;
+
+  private double[] camtran;
+  private double[] defaultArray = { 0, 0, 0, 0, 0, 0 };
 
   private boolean limelightOn;
-
-  private boolean isInDelay;
-  private int delayCounter;
 
   public Limelight() {
     table = NetworkTableInstance.getDefault().getTable("limelight");
@@ -50,20 +50,20 @@ public class Limelight extends Subsystem implements LimelightSettings {
 
     tx = 0.0; // Horizontal Offset From Crosshair To Target (-27 degrees to 27 degrees)
     ty = 0.0; // Vertical Offset From Crosshair To Target (-20.5 degrees to 20.5 degrees)
-    tz = 0.0; // distance from the camera to the target
-    tv = 0.0; // whether the limelight has any valid targets (0 or 1)
-    tl = 0.0;
+    tv = 0.0; // Whether the limelight has any valid targets (0 or 1)
+    ts = 0.0; // Skew or rotation (-90 degrees to 0 degrees)
+
+    camtran = new double[6];
 
     limelightOn = false;
-    isInDelay = false;
-    delayCounter = 0;
   }
 
   public void update() {
     tx = table.getEntry("tx").getDouble(0);
     ty = table.getEntry("ty").getDouble(0);
     tv = table.getEntry("tv").getDouble(0);
-    tl = table.getEntry("tl").getDouble(0);
+    ts = table.getEntry("ts").getDouble(0);
+    camtran = table.getEntry("camtran").getDoubleArray(defaultArray);
   }
 
   /**
@@ -84,7 +84,7 @@ public class Limelight extends Subsystem implements LimelightSettings {
    * 
    * @return the horizontal angle from the camera to the target
    */
-  public double horizontalAngleToTarget() {
+  public double getHorizontalAngleToTarget() {
     if (tv == 1) {
       return tx;
     } else {
@@ -92,13 +92,46 @@ public class Limelight extends Subsystem implements LimelightSettings {
     }
   }
 
+  public double getSkew() {
+    if (tv == 1) {
+      return tx;
+    } else {
+      return 0.0;
+    }
+  }
+
+  public double getCamTranZ() {
+    if (tv == 1) {
+      return camtran[CAMTRAN_Z];
+    } else {
+      return 0.0;
+    }
+  }
+
+  public double getCamTranX() {
+    if (tv == 1) {
+      return camtran[CAMTRAN_X];
+    } else {
+      return 0.0;
+    }
+  }
+
+  public double getCamTranYaw() {
+    if (tv == 1) {
+      return camtran[CAMTRAN_YAW];
+    } else {
+      return 0.0;
+    }
+  }
+
   /**
-   * Calculates the distance to the retro-reflective target
+   * Calculates angle to become perpendicular to target
    * 
-   * @return the horizontal distance from the camera to the target
+   * @return the horizontal angle between the target perpendicular and the
+   *         robot-target line
    */
-  public double distanceToTarget() {
-    return (HATCH_TARGET_HEIGHT - CAMERA_HEIGHT) / Math.tan(CAMERA_ANGLE + verticalAngleToTarget());
+  public double getAngle2() {
+    return getCamTranYaw() - getHorizontalAngleToTarget();
   }
 
   public boolean isLimelightOn() {
@@ -113,28 +146,6 @@ public class Limelight extends Subsystem implements LimelightSettings {
   public void turnLimelightOff() {
     table.getEntry("ledMode").setNumber(1);
     limelightOn = false;
-  }
-
-  public boolean getDelayState() {
-    return isInDelay;
-  }
-
-  public int getDelayCount() {
-    return delayCounter;
-  }
-
-  public void startDelay() {
-    delayCounter = 0;
-    isInDelay = true;
-  }
-
-  public void stopDelay() {
-    delayCounter = 0;
-    isInDelay = false;
-  }
-
-  public void incrementCounter() {
-    delayCounter++;
   }
 
   @Override

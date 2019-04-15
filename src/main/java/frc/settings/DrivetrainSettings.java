@@ -37,5 +37,10 @@ public interface DrivetrainSettings {
     public static final double TURN_KP = 0.015; // 0.01
     public static final double TURN_KI = 0.003; // 0.00225
     public static final double TURN_KD = 0.0001; // 0.0001
-    public static final double TURN_TOLERANCE = 2.0; //2.0
+    public static final double TURN_TOLERANCE = 2.0; // 2.0
+
+    // gains for auto aligning driving
+    public static final double STEERING_KP = 0.00625;
+    public static final double STEERING_KI = 0.00;
+    public static final double STEERING_KD = 0.0001;
 }

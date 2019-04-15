@@ -31,7 +31,15 @@ public interface LimelightSettings {
     // dependent on the mounting of the camera, field measurements, etc.
     public static final double CAMERA_ANGLE = 0; // in degrees
     public static final double HATCH_TARGET_HEIGHT = 0; // in inches
-    public static final double CARGO_TARGET_HEIGHT = 0; //in inches
-    public static final double CAMERA_HEIGHT = 4; //in inches
+    public static final double CARGO_TARGET_HEIGHT = 0; // in inches
+    public static final double CAMERA_HEIGHT = 4; // in inches
+
+    // camtran indices
+    public static final int CAMTRAN_X = 0;
+    public static final int CAMTRAN_Y = 1;
+    public static final int CAMTRAN_Z = 2;
+    public static final int CAMTRAN_PITCH = 3;
+    public static final int CAMTRAN_YAW = 4;
+    public static final int CAMTRAN_ROLL = 5;
 
 }
