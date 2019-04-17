@@ -17,22 +17,33 @@ public class SteeringGuidance implements Controller {
 
     private double kP, kI, kD;
 
+    private double drivetrainConstant;
+
     private PIDSource[] sources;
 
     private double z, x, yaw, horizontalOffset;
+
+    private int count;
+    private double rInv;
 
     private double errorSum, lastError;
 
     private double lastZ, lastX, lastYaw;
 
-    public SteeringGuidance(double kP, double kI, double kD, PIDSource[] sources) {
+    public SteeringGuidance(double kP, double kI, double kD, double drivetrainConstant, PIDSource[] sources) {
         this.kP = kP;
         this.kI = kI;
         this.kD = kD;
+
+        this.drivetrainConstant = drivetrainConstant;
+
         this.sources = sources;
 
         yaw = 0.0;
         horizontalOffset = 0.0;
+
+        count = 0;
+        rInv = 0.0;
 
         errorSum = 0.0;
         lastError = 0.0;
@@ -51,9 +62,35 @@ public class SteeringGuidance implements Controller {
 
         lastError = error;
 
-        if(z != 0.0 && x != 0.0 && yaw != 0.0) setLastValues(z, x, yaw);
+        if (z != 0.0 && x != 0.0 && yaw != 0.0)
+            setLastValues(z, x, yaw);
 
         return kP * error + kI * errorSum + kD * errorDelta;
+    }
+
+    public double calculateOutput(double z, double x, double yaw, double horizontalOffset) {
+        this.z = z;
+        this.x = x;
+        this.yaw = yaw;
+        this.horizontalOffset = horizontalOffset;
+
+        double turnRate = 0.0;
+        double velocity = getSourcesAverageRate();
+
+        if (yaw < -0.0001 && yaw > 0.0001) {
+            double distanceSquared = getDistanceSquared();
+            double rInvCurrent = 2 * x / distanceSquared;
+
+            count++;
+
+            rInv = ((count - 1) / (count)) * rInv + (rInvCurrent / count);
+
+            turnRate = kP * (-yaw + 2 * horizontalOffset) + rInv * velocity;
+        } else {
+            turnRate = rInv * velocity;
+        }
+
+        return drivetrainConstant * turnRate;
     }
 
     private double turnRateEstimator() {

@@ -48,6 +48,8 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
   // Separate Delayers for subsystem functions
   private Delayer intakeCurrentDelay;
+  private Delayer elevatorLatchDelay;
+  private Delayer carriageLatchDelay;
 
   // controls if the elevator setpoints correlate to hatch heights or ball heights
   // true if hatch heights, false if cargo heights
@@ -77,6 +79,8 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     enabledLooper = new Looper(REFRESH_RATE);
 
     intakeCurrentDelay = new Delayer();
+    elevatorLatchDelay = new Delayer();
+    carriageLatchDelay = new Delayer();
 
     // add subsystems to the Looper holster
     enabledLooper.register(drivetrain::update);
@@ -139,9 +143,9 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     }
 
     if (rightJoystick.getPOV() == 0) {
-      elevator.moveManually(.5);
+      elevator.moveManually(0.5);
     } else if (rightJoystick.getPOV() == 180) {
-      elevator.moveManually(-.5);
+      elevator.moveManually(-0.25);
     }
 
     // Operator has the ability to move the carriage
@@ -305,7 +309,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     // moving the elevator manually
     if (rightJoystick.getPOV() == 0) {
-      elevator.moveManually(0.75);
+      elevator.moveManually(0.5);
     } else if (rightJoystick.getPOV() == 180) {
       elevator.moveManually(-0.5);
     }
@@ -326,31 +330,47 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       climber.moveManually(-0.5);
     }
 
-    // moves carriage and elevator to latch position, waiting to engage
-    if (operatorJoystick.getRisingEdge(CARRIAGE_LATCH)) {
+    if(operatorJoystick.getRisingEdge(CARRIAGE_LATCH)) {
       hatchButtonMode = true;
       carriage.uprightPosition();
-      elevator.startDelay();
-      carriage.startDelay();
-    } else {
-      // if the elevator has iterated 75 cycles (1.5 sec) in delay
-      if (elevator.getDelayCount() > 75 && elevator.getDelayState()) {
-        elevator.stopDelay();
-        elevator.moveSmooth(LATCH_HEIGHT);
-      } else if (elevator.getDelayState()) {
-        elevator.incrementCounter();
-      }
-
-      // delay for the carriage engaging the lock (3 seconds from button press)
-      if (carriage.getDelayCount() > 150 && carriage.getDelayState()) {
-        carriage.stopDelay();
-        carriage.latchPosition();
-        carriage.stopHoldConstant(); // prevents motor from applying power when latched
-      } else if (carriage.getDelayState()) {
-        carriage.incrementCounter();
-      }
-
+      elevatorLatchDelay.startDelay(1.5);
+      carriageLatchDelay.startDelay(3.0);
     }
+
+    if(elevatorLatchDelay.checkDelayStatus()) {
+      elevator.moveSmooth(LATCH_HEIGHT);
+    }
+
+    if(carriageLatchDelay.checkDelayStatus()) {
+      carriage.latchPosition();
+      carriage.stopHoldConstant();
+    }
+
+    // moves carriage and elevator to latch position, waiting to engage
+    // if (operatorJoystick.getRisingEdge(CARRIAGE_LATCH)) {
+    //   hatchButtonMode = true;
+    //   carriage.uprightPosition();
+    //   elevator.startDelay();
+    //   carriage.startDelay();
+    // } else {
+    //   // if the elevator has iterated 75 cycles (1.5 sec) in delay
+    //   if (elevator.getDelayCount() > 75 && elevator.getDelayState()) {
+    //     elevator.stopDelay();
+    //     elevator.moveSmooth(LATCH_HEIGHT);
+    //   } else if (elevator.getDelayState()) {
+    //     elevator.incrementCounter();
+    //   }
+
+    //   // delay for the carriage engaging the lock (3 seconds from button press)
+    //   if (carriage.getDelayCount() > 150 && carriage.getDelayState()) {
+    //     carriage.stopDelay();
+    //     carriage.latchPosition();
+    //     carriage.stopHoldConstant(); // prevents motor from applying power when latched
+    //   } else if (carriage.getDelayState()) {
+    //     carriage.incrementCounter();
+    //   }
+
+    // }
 
     if (operatorJoystick.getRisingEdge(ELEVATOR_HARDSTOP_DISABLE)) {
       elevator.disableHardstop();

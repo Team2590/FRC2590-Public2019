@@ -155,7 +155,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
     turnController = new PID(TURN_KP, TURN_KI, TURN_KD, TURN_TOLERANCE, gyro, dualMotorControllers);
 
-    steeringGuidance = new SteeringGuidance(STEERING_KP, STEERING_KI, STEERING_KD, sources);
+    steeringGuidance = new SteeringGuidance(STEERING_KP, STEERING_KI, STEERING_KD, CHARACTERIZATION_CONSTANT, sources);
 
     // 80 in/sec^2 arbitrary accel value to avoid syntax error
     leftDriveProfiler = new MotionProfile(DRIVETRAIN_KP, DRIVETRAIN_KI, DRIVETRAIN_KV, DRIVETRAIN_KA,
