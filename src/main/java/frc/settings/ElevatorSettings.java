@@ -14,20 +14,20 @@ public interface ElevatorSettings {
 
 
     // Motion Profile Constants
-    public static final double ELEVATOR_KP = 0.15;
-    public static final double ELEVATOR_KI = 0.03;
-    public static final double ELEVATOR_KV = 1.0 / 26.1; // 26.1 in/s free speed
-    public static final double ELEVATOR_KA = 0.0003;
+    public static final double ELEVATOR_KP = 0.6;
+    public static final double ELEVATOR_KI = 0.12;
+    public static final double ELEVATOR_KV = 1.0 / 45.5; // 45.5 in/s free speed
+    public static final double ELEVATOR_KA = 0.003;
 
-    public static final double ELEVATOR_MAX_VEL = 25.0; //38 in w/ new shaft
-    public static final double ELEVATOR_MAX_ACC = 100.0; //150 in/s with new shaft
+    public static final double ELEVATOR_MAX_VEL = 40.0; //40 in w/ new shaft
+    public static final double ELEVATOR_MAX_ACC = 175.0; //175 in/s with new shaft
     public static final double ELEVATOR_SLOW_VEL = 15.0;
     public static final double ELEVATOR_SLOW_ACC = 15.0;
     public static final double ELEVATOR_TOLERANCE = 2.0;
 
-    public static final double ELEVATOR_HOLD_CONSTANT = 0.25;
+    public static final double ELEVATOR_HOLD_CONSTANT = 0.25; //0.25
 
     public static final double GEAR_RATIO = 8.18;
-    public static final double ENCODER_CONVERSION = 0.001238; // 0.001909 with new shaft
+    public static final double ENCODER_CONVERSION = 0.00216; // 0.001238 current
 
 }

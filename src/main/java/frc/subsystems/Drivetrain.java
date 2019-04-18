@@ -23,6 +23,7 @@ import frc.controllers.PID;
 import frc.controllers.SteeringGuidance;
 import frc.robot.RobotMap;
 import frc.settings.DrivetrainSettings;
+import frc.util.Limelight;
 import frc.util.NemesisCANEncoder;
 import frc.util.NemesisDrive;
 import frc.util.NemesisMultiMC;
@@ -187,7 +188,7 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
       break;
 
     case GUIDE_STEERING:
-      double steeringTurnPower = steeringGuidance.calculate(z, x, yaw, horizontalOffset);
+      double steeringTurnPower = steeringGuidance.calculate(horizontalOffset, yaw, z, x);
 
       System.out.println(yaw + " " + horizontalOffset + " " + (yaw - horizontalOffset) + " " + steeringTurnPower);
 
@@ -247,13 +248,15 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     driveState = States.TELEOP_DRIVE;
   }
 
-  public void guideSteering(double straight, double z, double x, double yaw, double horizontalOffset) {
+  public void guideSteering(double straight, double horizontalOffset, double yaw, double z, double x) {
     straightPower = straight;
 
+    this.horizontalOffset = horizontalOffset;
+    this.yaw = yaw;
     this.z = z;
     this.x = x;
-    this.yaw = yaw;
-    this.horizontalOffset = horizontalOffset;
+
+    steeringGuidance.init();
 
     driveState = States.GUIDE_STEERING;
   }
@@ -326,6 +329,10 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
   public void manualGearShift(boolean isHighGear) {
     this.isHighGear = isHighGear;
     shiftingPiston.set(isHighGear);
+  }
+
+  public boolean isHighGear() {
+    return isHighGear;
   }
 
   // toggles between high and low gear

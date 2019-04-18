@@ -45,5 +45,5 @@ public interface DrivetrainSettings {
     // gains for auto aligning driving
     public static final double STEERING_KP = 0.00625;
     public static final double STEERING_KI = 0.00;
-    public static final double STEERING_KD = 0.0001;
+    public static final double STEERING_KD = 0.00;
 }

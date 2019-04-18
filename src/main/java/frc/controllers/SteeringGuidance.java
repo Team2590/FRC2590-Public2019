@@ -39,6 +39,12 @@ public class SteeringGuidance implements Controller {
 
         this.sources = sources;
 
+        init();
+    }
+
+    public void init() {
+        z = 0.0;
+        x = 0.0;
         yaw = 0.0;
         horizontalOffset = 0.0;
 
@@ -47,25 +53,6 @@ public class SteeringGuidance implements Controller {
 
         errorSum = 0.0;
         lastError = 0.0;
-    }
-
-    public double calculate(double z, double x, double yaw, double horizontalOffset) {
-        this.z = z;
-        this.x = x;
-        this.yaw = (yaw == 0.0 ? turnRateEstimator() : yaw);
-        this.horizontalOffset = horizontalOffset;
-
-        double error = -yaw + 2 * horizontalOffset;
-        double errorDelta = error - lastError;
-
-        errorSum += error * dt;
-
-        lastError = error;
-
-        if (z != 0.0 && x != 0.0 && yaw != 0.0)
-            setLastValues(z, x, yaw);
-
-        return kP * error + kI * errorSum + kD * errorDelta;
     }
 
     public double calculateOutput(double z, double x, double yaw, double horizontalOffset) {
@@ -77,7 +64,7 @@ public class SteeringGuidance implements Controller {
         double turnRate = 0.0;
         double velocity = getSourcesAverageRate();
 
-        if (yaw < -0.0001 && yaw > 0.0001) {
+        if (Math.abs(yaw) > 0.0001) {
             double distanceSquared = getDistanceSquared();
             double rInvCurrent = 2 * x / distanceSquared;
 
@@ -93,27 +80,41 @@ public class SteeringGuidance implements Controller {
         return drivetrainConstant * turnRate;
     }
 
-    private double turnRateEstimator() {
+    public double calculate(double horizontalOffset, double yaw, double z, double x) {
         double velocity = getSourcesAverageRate();
+
+        this.horizontalOffset = horizontalOffset;
+
+        this.yaw = (Math.abs(yaw) < 0.0001 ? estimateYaw(velocity) : yaw);
+        this.z = (Math.abs(z) < 0.0001 ? estimateZ(velocity) : z);
+        this.x = (Math.abs(x) < 0.0001 ? estimateX(velocity) : x);
+
+        double error = -this.yaw + 2 * this.horizontalOffset;
+
+        System.out.println(horizontalOffset + " " + this.horizontalOffset + " " + yaw + " " + this.yaw + " " + z + " "
+                + this.z + " " + x + " " + this.x + " " + kP * error);
+
+        return kP * error;
+    }
+
+    private double estimateYaw(double velocity) {
         double distanceSquared = getDistanceSquared();
-        double previousX = estimateX();
-        double previousYaw = lastYaw;
+        double previousX = x;
+        double previousYaw = yaw;
 
         return previousYaw + dt * Math.toDegrees((velocity / distanceSquared) * 2 * previousX);
     }
 
-    private double estimateZ() {
-        double velocity = getSourcesAverageRate();
-        double previousZ = lastZ;
-        double previousYaw = lastYaw;
+    private double estimateZ(double velocity) {
+        double previousZ = z;
+        double previousYaw = yaw;
 
         return previousZ + dt * velocity * Math.sin(previousYaw);
     }
 
-    private double estimateX() {
-        double velocity = getSourcesAverageRate();
-        double previousX = lastX;
-        double previousYaw = lastYaw;
+    private double estimateX(double velocity) {
+        double previousX = x;
+        double previousYaw = yaw;
 
         return previousX + dt * velocity * Math.sin(previousYaw);
     }
@@ -137,12 +138,6 @@ public class SteeringGuidance implements Controller {
         double average = (leftSource.pidGet() + rightSource.pidGet()) / 2;
 
         return average;
-    }
-
-    private void setLastValues(double lastZ, double lastX, double lastYaw) {
-        this.lastZ = lastZ;
-        this.lastX = lastX;
-        this.lastYaw = lastYaw;
     }
 
     /**

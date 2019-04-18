@@ -84,7 +84,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     // add subsystems to the Looper holster
     enabledLooper.register(drivetrain::update);
-    enabledLooper.register(carriage::update);
+    //enabledLooper.register(carriage::update);
     enabledLooper.register(elevator::update);
     enabledLooper.register(climber::update);
 
@@ -122,6 +122,12 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
     // }
 
+    if (drivetrain.isHighGear()) {
+      limelight.turnLimelightOff();
+    } else {
+      limelight.turnLimelightOn();
+    }
+
     // manual shifting
     if (leftJoystick.getRisingEdge(UPSHIFT)) {
       drivetrain.manualGearShift(true);
@@ -138,8 +144,8 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     // McKillip Drive
     if (leftJoystick.getRawButton(AUTO_ALIGN)) {
-      drivetrain.guideSteering(-leftJoystick.getYBanded(), limelight.getCamTranZ(), limelight.getCamTranX(),
-          limelight.getCamTranYaw(), limelight.getHorizontalAngleToTarget());
+      drivetrain.guideSteering(-leftJoystick.getYBanded(), limelight.getHorizontalAngleToTarget(),
+          limelight.getCamTranYaw(), limelight.getCamTranZ(), limelight.getCamTranX());
     }
 
     if (rightJoystick.getPOV() == 0) {
@@ -281,30 +287,25 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       drivetrain.forceTeleop();
     }
 
+    if (drivetrain.isHighGear()) {
+      limelight.turnLimelightOff();
+    } else {
+      limelight.turnLimelightOn();
+    }
+
     // manual shifting
     if (leftJoystick.getRisingEdge(UPSHIFT)) {
-      limelight.turnLimelightOff();
+      // limelight.turnLimelightOff();
       drivetrain.manualGearShift(true);
     } else if (leftJoystick.getRisingEdge(DOWNSHIFT)) {
-      limelight.turnLimelightOn();
+      // limelight.turnLimelightOn();
       drivetrain.manualGearShift(false);
     }
 
-    /*
-     * // Auto Align // input the limelight reading once to avoid latency issues if
-     * (leftJoystick.getRisingEdge(AUTO_ALIGN)) { limelight.turnLimelightOn();
-     * drivetrain.turn(drivetrain.getHeading() +
-     * limelight.getHorizontalAngleToTarget()); }
-     */
-    // System.out.println("h = " + -limelight.getCamTranYaw() + " b = " +
-    // -limelight.getHorizontalAngleToTarget()
-    // + " a = " + (limelight.getHorizontalAngleToTarget() -
-    // limelight.getCamTranYaw()));
-
     // McKillip Drive
     if (leftJoystick.getRawButton(AUTO_ALIGN)) {
-      drivetrain.guideSteering(-leftJoystick.getYBanded(), limelight.getCamTranZ(), limelight.getCamTranX(),
-          limelight.getCamTranYaw(), limelight.getHorizontalAngleToTarget());
+      drivetrain.guideSteering(-leftJoystick.getYBanded(), limelight.getHorizontalAngleToTarget(),
+          limelight.getCamTranYaw(), limelight.getCamTranZ(), limelight.getCamTranX());
     }
 
     // moving the elevator manually
@@ -327,48 +328,49 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     if (operatorJoystick.getPOV() == 0) {
       climber.moveManually(0.5);
     } else if (operatorJoystick.getPOV() == 180) {
-      climber.moveManually(-0.5);
+      climber.moveManually(-0.25);
     }
 
-    if(operatorJoystick.getRisingEdge(CARRIAGE_LATCH)) {
+    if (operatorJoystick.getRisingEdge(CARRIAGE_LATCH)) {
       hatchButtonMode = true;
       carriage.uprightPosition();
       elevatorLatchDelay.startDelay(1.5);
       carriageLatchDelay.startDelay(3.0);
     }
 
-    if(elevatorLatchDelay.checkDelayStatus()) {
+    if (elevatorLatchDelay.checkDelayStatus()) {
       elevator.moveSmooth(LATCH_HEIGHT);
     }
 
-    if(carriageLatchDelay.checkDelayStatus()) {
+    if (carriageLatchDelay.checkDelayStatus()) {
       carriage.latchPosition();
       carriage.stopHoldConstant();
     }
 
     // moves carriage and elevator to latch position, waiting to engage
     // if (operatorJoystick.getRisingEdge(CARRIAGE_LATCH)) {
-    //   hatchButtonMode = true;
-    //   carriage.uprightPosition();
-    //   elevator.startDelay();
-    //   carriage.startDelay();
+    // hatchButtonMode = true;
+    // carriage.uprightPosition();
+    // elevator.startDelay();
+    // carriage.startDelay();
     // } else {
-    //   // if the elevator has iterated 75 cycles (1.5 sec) in delay
-    //   if (elevator.getDelayCount() > 75 && elevator.getDelayState()) {
-    //     elevator.stopDelay();
-    //     elevator.moveSmooth(LATCH_HEIGHT);
-    //   } else if (elevator.getDelayState()) {
-    //     elevator.incrementCounter();
-    //   }
+    // // if the elevator has iterated 75 cycles (1.5 sec) in delay
+    // if (elevator.getDelayCount() > 75 && elevator.getDelayState()) {
+    // elevator.stopDelay();
+    // elevator.moveSmooth(LATCH_HEIGHT);
+    // } else if (elevator.getDelayState()) {
+    // elevator.incrementCounter();
+    // }
 
-    //   // delay for the carriage engaging the lock (3 seconds from button press)
-    //   if (carriage.getDelayCount() > 150 && carriage.getDelayState()) {
-    //     carriage.stopDelay();
-    //     carriage.latchPosition();
-    //     carriage.stopHoldConstant(); // prevents motor from applying power when latched
-    //   } else if (carriage.getDelayState()) {
-    //     carriage.incrementCounter();
-    //   }
+    // // delay for the carriage engaging the lock (3 seconds from button press)
+    // if (carriage.getDelayCount() > 150 && carriage.getDelayState()) {
+    // carriage.stopDelay();
+    // carriage.latchPosition();
+    // carriage.stopHoldConstant(); // prevents motor from applying power when
+    // latched
+    // } else if (carriage.getDelayState()) {
+    // carriage.incrementCounter();
+    // }
 
     // }
 
