@@ -84,7 +84,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     // add subsystems to the Looper holster
     enabledLooper.register(drivetrain::update);
-    //enabledLooper.register(carriage::update);
+    // enabledLooper.register(carriage::update);
     enabledLooper.register(elevator::update);
     enabledLooper.register(climber::update);
 
@@ -118,9 +118,12 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     limelight.update();
 
-    // if (drivetrain.isTurnDone()) {
-    drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
-    // }
+    // more precise modifications in low gear (cut x in half)
+    if (drivetrain.isTurnDone() && drivetrain.isHighGear()) {
+      drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
+    } else if (drivetrain.isTurnDone()) {
+      drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded()/2);
+    }
 
     if (drivetrain.isHighGear()) {
       limelight.turnLimelightOff();
@@ -143,6 +146,10 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
      */
 
     // McKillip Drive
+    if(leftJoystick.getRisingEdge(AUTO_ALIGN)) {
+      drivetrain.initGuideSteering();
+    }
+
     if (leftJoystick.getRawButton(AUTO_ALIGN)) {
       drivetrain.guideSteering(-leftJoystick.getYBanded(), limelight.getHorizontalAngleToTarget(),
           limelight.getCamTranYaw(), limelight.getCamTranZ(), limelight.getCamTranX());
@@ -279,8 +286,11 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     // teleop in the middle of the control loop
     // Also prevents driver from moving the robot while it auto aligns
 
-    if (drivetrain.isTurnDone()) {
+    // more precise modifications in low gear (cut x in half)
+    if (drivetrain.isTurnDone() && drivetrain.isHighGear()) {
       drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
+    } else if (drivetrain.isTurnDone()) {
+      drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded()/2);
     }
 
     if (operatorJoystick.getRisingEdge(FORCE_TELEOP) || operatorJoystick.getRisingEdge(FORCE_TELEOP_FAILSAFE)) {
@@ -295,14 +305,16 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     // manual shifting
     if (leftJoystick.getRisingEdge(UPSHIFT)) {
-      // limelight.turnLimelightOff();
       drivetrain.manualGearShift(true);
     } else if (leftJoystick.getRisingEdge(DOWNSHIFT)) {
-      // limelight.turnLimelightOn();
       drivetrain.manualGearShift(false);
     }
 
     // McKillip Drive
+    if(leftJoystick.getRisingEdge(AUTO_ALIGN)) {
+      drivetrain.initGuideSteering();
+    }
+
     if (leftJoystick.getRawButton(AUTO_ALIGN)) {
       drivetrain.guideSteering(-leftJoystick.getYBanded(), limelight.getHorizontalAngleToTarget(),
           limelight.getCamTranYaw(), limelight.getCamTranZ(), limelight.getCamTranX());

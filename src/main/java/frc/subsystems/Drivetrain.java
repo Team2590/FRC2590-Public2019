@@ -190,10 +190,11 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     case GUIDE_STEERING:
       double steeringTurnPower = steeringGuidance.calculate(horizontalOffset, yaw, z, x);
 
-      System.out.println(yaw + " " + horizontalOffset + " " + (yaw - horizontalOffset) + " " + steeringTurnPower);
-
       // replace turnPower with calculation from the steering guidance controller
       double output[] = driveSystem.calculate(straightPower, steeringTurnPower);
+
+      System.out.println("output[0] " + output[0] + " output[1] " + output[1]);
+
       setSpeeds(output[0], output[1]);
 
       break;
@@ -248,6 +249,10 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     driveState = States.TELEOP_DRIVE;
   }
 
+  public void initGuideSteering() {
+    steeringGuidance.init();
+  }
+
   public void guideSteering(double straight, double horizontalOffset, double yaw, double z, double x) {
     straightPower = straight;
 
@@ -255,8 +260,6 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     this.yaw = yaw;
     this.z = z;
     this.x = x;
-
-    steeringGuidance.init();
 
     driveState = States.GUIDE_STEERING;
   }
