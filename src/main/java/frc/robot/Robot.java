@@ -84,7 +84,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     // add subsystems to the Looper holster
     enabledLooper.register(drivetrain::update);
-    // enabledLooper.register(carriage::update);
+    enabledLooper.register(carriage::update);
     enabledLooper.register(elevator::update);
     enabledLooper.register(climber::update);
 
@@ -122,7 +122,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     if (drivetrain.isTurnDone() && drivetrain.isHighGear()) {
       drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
     } else if (drivetrain.isTurnDone()) {
-      drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded()/2);
+      drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded() / 2);
     }
 
     if (drivetrain.isHighGear()) {
@@ -146,13 +146,16 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
      */
 
     // McKillip Drive
-    if(leftJoystick.getRisingEdge(AUTO_ALIGN)) {
+    if (leftJoystick.getRisingEdge(AUTO_ALIGN)) {
       drivetrain.initGuideSteering();
     }
 
     if (leftJoystick.getRawButton(AUTO_ALIGN)) {
+      //limelight.turnLimelightOn();
       drivetrain.guideSteering(-leftJoystick.getYBanded(), limelight.getHorizontalAngleToTarget(),
           limelight.getCamTranYaw(), limelight.getCamTranZ(), limelight.getCamTranX());
+    } else {
+      //limelight.turnLimelightOff();
     }
 
     if (rightJoystick.getPOV() == 0) {
@@ -281,7 +284,6 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     // System.out.println("Carriage " + carriage.getAngle());
     // System.out.println("Elev " + elevator.getHeight());
     // System.out.println("climber " + climber.getAngle());
-
     // This logic checks if the robot is still turning, to avoid switching states to
     // teleop in the middle of the control loop
     // Also prevents driver from moving the robot while it auto aligns
@@ -290,7 +292,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     if (drivetrain.isTurnDone() && drivetrain.isHighGear()) {
       drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
     } else if (drivetrain.isTurnDone()) {
-      drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded()/2);
+      drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded() / 2);
     }
 
     if (operatorJoystick.getRisingEdge(FORCE_TELEOP) || operatorJoystick.getRisingEdge(FORCE_TELEOP_FAILSAFE)) {
@@ -311,20 +313,23 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     }
 
     // McKillip Drive
-    if(leftJoystick.getRisingEdge(AUTO_ALIGN)) {
+    if (leftJoystick.getFallingEdge(AUTO_ALIGN)) {
       drivetrain.initGuideSteering();
     }
 
     if (leftJoystick.getRawButton(AUTO_ALIGN)) {
+      // limelight.turnLimelightOn();
       drivetrain.guideSteering(-leftJoystick.getYBanded(), limelight.getHorizontalAngleToTarget(),
           limelight.getCamTranYaw(), limelight.getCamTranZ(), limelight.getCamTranX());
+    } else {
+      // limelight.turnLimelightOff();
     }
 
     // moving the elevator manually
     if (rightJoystick.getPOV() == 0) {
-      elevator.moveManually(0.5);
+      elevator.moveManually(0.75);
     } else if (rightJoystick.getPOV() == 180) {
-      elevator.moveManually(-0.5);
+      elevator.moveManually(-0.75);
     }
 
     // Operator has the ability to move the carriage
@@ -359,41 +364,14 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       carriage.stopHoldConstant();
     }
 
-    // moves carriage and elevator to latch position, waiting to engage
-    // if (operatorJoystick.getRisingEdge(CARRIAGE_LATCH)) {
-    // hatchButtonMode = true;
-    // carriage.uprightPosition();
-    // elevator.startDelay();
-    // carriage.startDelay();
-    // } else {
-    // // if the elevator has iterated 75 cycles (1.5 sec) in delay
-    // if (elevator.getDelayCount() > 75 && elevator.getDelayState()) {
-    // elevator.stopDelay();
-    // elevator.moveSmooth(LATCH_HEIGHT);
-    // } else if (elevator.getDelayState()) {
-    // elevator.incrementCounter();
-    // }
-
-    // // delay for the carriage engaging the lock (3 seconds from button press)
-    // if (carriage.getDelayCount() > 150 && carriage.getDelayState()) {
-    // carriage.stopDelay();
-    // carriage.latchPosition();
-    // carriage.stopHoldConstant(); // prevents motor from applying power when
-    // latched
-    // } else if (carriage.getDelayState()) {
-    // carriage.incrementCounter();
-    // }
-
-    // }
-
     if (operatorJoystick.getRisingEdge(ELEVATOR_HARDSTOP_DISABLE)) {
       elevator.disableHardstop();
     }
 
     // runs the elevator and climber arm downwards simultaneously
     if (operatorJoystick.getRawButton(LEVEL_3_CLIMBER_AND_ELEVATOR)) {
-      elevator.moveManually(-0.6);
-      climber.moveManually(0.5);
+      elevator.moveManually(-0.8);
+      climber.moveManually(0.45);
     } else if (operatorJoystick.getRawButton(LEVEL_2_CLIMBER_AND_ELEVATOR)) {
       elevator.moveManually(-0.3);
       climber.moveManually(0.25);

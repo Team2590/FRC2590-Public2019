@@ -16,11 +16,11 @@ public interface ElevatorSettings {
     // Motion Profile Constants
     public static final double ELEVATOR_KP = 0.6;
     public static final double ELEVATOR_KI = 0.12;
-    public static final double ELEVATOR_KV = 1.0 / 45.5; // 45.5 in/s free speed
+    public static final double ELEVATOR_KV = 1.0 / 57.0; // 45.5 in/s free speed
     public static final double ELEVATOR_KA = 0.003;
 
-    public static final double ELEVATOR_MAX_VEL = 40.0; //40 in w/ new shaft
-    public static final double ELEVATOR_MAX_ACC = 175.0; //175 in/s with new shaft
+    public static final double ELEVATOR_MAX_VEL = 55.0; //40 in w/ new shaft
+    public static final double ELEVATOR_MAX_ACC = 300.0; //175 in/s with new shaft
     public static final double ELEVATOR_SLOW_VEL = 15.0;
     public static final double ELEVATOR_SLOW_ACC = 15.0;
     public static final double ELEVATOR_TOLERANCE = 2.0;

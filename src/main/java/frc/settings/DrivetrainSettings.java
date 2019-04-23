@@ -28,7 +28,7 @@ public interface DrivetrainSettings {
     public static final double RIGHT_LINEAR_KI = 0.0;
 
     // constant from drivetrain characterization
-    public static final double CHARACTERIZATION_CONSTANT = 0.0;
+    public static final double CHARACTERIZATION_TURN_CONSTANT = 1.0 / 8.54;
 
     // gains for motion profiling
     public static final double DRIVETRAIN_KP = 0.0;

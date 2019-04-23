@@ -26,7 +26,7 @@ public interface FieldSettings {
     public static final double FEEDER_STATION = 35.5;
 
     // setpoint for latching the carriage
-    public static final double LATCH_HEIGHT = 20.0;
+    public static final double LATCH_HEIGHT = 22.0;  //previously 20, halved for tuning purposes
 
     // refresh rate for the Looper class
     public static final double REFRESH_RATE = 0.02; // 10ms

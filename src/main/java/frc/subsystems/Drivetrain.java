@@ -127,6 +127,8 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     leftExternalEnc = new Encoder(LEFT_DRIVE_ENCODER_A, LEFT_DRIVE_ENCODER_B);
     rightExternalEnc = new Encoder(RIGHT_DRIVE_ENCODER_A, RIGHT_DRIVE_ENCODER_B);
 
+    leftExternalEnc.setReverseDirection(true);
+
     // converts units of encoders
     setConversionFactors();
 
@@ -152,11 +154,11 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
     // rightDriveLinearizer.setP(RIGHT_LINEAR_KP);
     // rightDriveLinearizer.setI(RIGHT_LINEAR_KI);
 
-    PIDSource[] sources = { leftDriveEncoder, rightDriveEncoder };
+    Encoder[] encoders = { leftExternalEnc, rightExternalEnc };
 
     turnController = new PID(TURN_KP, TURN_KI, TURN_KD, TURN_TOLERANCE, gyro, dualMotorControllers);
 
-    steeringGuidance = new SteeringGuidance(STEERING_KP, STEERING_KI, STEERING_KD, CHARACTERIZATION_CONSTANT, sources);
+    steeringGuidance = new SteeringGuidance(STEERING_KP, STEERING_KI, STEERING_KD, CHARACTERIZATION_TURN_CONSTANT, encoders);
 
     // 80 in/sec^2 arbitrary accel value to avoid syntax error
     leftDriveProfiler = new MotionProfile(DRIVETRAIN_KP, DRIVETRAIN_KI, DRIVETRAIN_KV, DRIVETRAIN_KA,
@@ -189,11 +191,10 @@ public class Drivetrain extends Subsystem implements RobotMap, DrivetrainSetting
 
     case GUIDE_STEERING:
       double steeringTurnPower = steeringGuidance.calculate(horizontalOffset, yaw, z, x);
-
       // replace turnPower with calculation from the steering guidance controller
       double output[] = driveSystem.calculate(straightPower, steeringTurnPower);
 
-      System.out.println("output[0] " + output[0] + " output[1] " + output[1]);
+      //System.out.println("output[0] " + output[0] + " output[1] " + output[1]);
 
       setSpeeds(output[0], output[1]);
 

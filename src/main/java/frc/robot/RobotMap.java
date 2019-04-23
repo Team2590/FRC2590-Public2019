@@ -33,7 +33,7 @@ public interface RobotMap {
      * Climber
      */
     public static final int CLIMBER_ARTICULATE_MASTER = 6;
-    public static final int CLIMBER_ARTICULATE_SLAVE = 7; //7 on real bot, 9 on pbot
+    public static final int CLIMBER_ARTICULATE_SLAVE = 9; //7 on real bot, 9 on pbot
     public static final int CLIMBER_INTAKE = 8;
     public static final int CLIMBER_POTENTIOMETER = 2;
 
