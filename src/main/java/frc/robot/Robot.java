@@ -9,6 +9,7 @@ import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.looper.Looper;
 import frc.settings.FieldSettings;
 import frc.subsystems.Carriage;
@@ -151,11 +152,11 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
     }
 
     if (leftJoystick.getRawButton(AUTO_ALIGN)) {
-      //limelight.turnLimelightOn();
+      // limelight.turnLimelightOn();
       drivetrain.guideSteering(-leftJoystick.getYBanded(), limelight.getHorizontalAngleToTarget(),
           limelight.getCamTranYaw(), limelight.getCamTranZ(), limelight.getCamTranX());
     } else {
-      //limelight.turnLimelightOff();
+      // limelight.turnLimelightOff();
     }
 
     if (rightJoystick.getPOV() == 0) {
@@ -290,7 +291,7 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     // more precise modifications in low gear (cut x in half)
     if (drivetrain.isTurnDone() && drivetrain.isHighGear()) {
-      drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded());
+      drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded() / 2);
     } else if (drivetrain.isTurnDone()) {
       drivetrain.teleopDrive(-leftJoystick.getYBanded(), rightJoystick.getXBanded() / 2);
     }
@@ -299,10 +300,11 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       drivetrain.forceTeleop();
     }
 
-    if (drivetrain.isHighGear()) {
-      limelight.turnLimelightOff();
-    } else {
+    // limelight is on in hatch mode
+    if (hatchButtonMode) {
       limelight.turnLimelightOn();
+    } else {
+      limelight.turnLimelightOff();
     }
 
     // manual shifting
@@ -321,15 +323,17 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       // limelight.turnLimelightOn();
       drivetrain.guideSteering(-leftJoystick.getYBanded(), limelight.getHorizontalAngleToTarget(),
           limelight.getCamTranYaw(), limelight.getCamTranZ(), limelight.getCamTranX());
-    } else {
-      // limelight.turnLimelightOff();
     }
+
+    // detects and informs operator whether we have limelight values
+    SmartDashboard.putBoolean("DB/LED 0", limelight.hasTarget());
+    SmartDashboard.putBoolean("DB/LED 1", limelight.has3DLoc());
 
     // moving the elevator manually
     if (rightJoystick.getPOV() == 0) {
-      elevator.moveManually(0.75);
+      elevator.moveManually(0.6);
     } else if (rightJoystick.getPOV() == 180) {
-      elevator.moveManually(-0.75);
+      elevator.moveManually(-0.8);
     }
 
     // Operator has the ability to move the carriage
@@ -339,11 +343,13 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
       carriage.uprightPosition();
     } else if (operatorJoystick.getRisingEdge(CARRIAGE_BACK)) {
       carriage.backPosition();
+    } else if (operatorJoystick.getRisingEdge(CARRIAGE_FRONT_HATCH)) {
+      carriage.frontHatchPosition();
     }
 
     // moving the climber arm manually
     if (operatorJoystick.getPOV() == 0) {
-      climber.moveManually(0.5);
+      climber.moveManually(1.0);
     } else if (operatorJoystick.getPOV() == 180) {
       climber.moveManually(-0.25);
     }
@@ -370,11 +376,9 @@ public class Robot extends TimedRobot implements FieldSettings, ButtonMap {
 
     // runs the elevator and climber arm downwards simultaneously
     if (operatorJoystick.getRawButton(LEVEL_3_CLIMBER_AND_ELEVATOR)) {
-      elevator.moveManually(-0.8);
-      climber.moveManually(0.45);
-    } else if (operatorJoystick.getRawButton(LEVEL_2_CLIMBER_AND_ELEVATOR)) {
-      elevator.moveManually(-0.3);
-      climber.moveManually(0.25);
+      elevator.climbThree(-0.75);
+      // elevator.moveManually(-0.8);
+      climber.moveManually(0.525);
     }
 
     // runs the intake wheels on the climber arm

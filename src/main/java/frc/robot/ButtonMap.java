@@ -1,3 +1,4 @@
+
 /*----------------------------------------------------------------------------*/
 /* Copyright (c) 2018 FIRST. All Rights Reserved.                             */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
@@ -39,8 +40,9 @@ public interface ButtonMap {
     public static final int CARRIAGE_BACK = 6;
     public static final int CARRIAGE_LATCH = 7;
     public static final int ELEVATOR_HARDSTOP_DISABLE = 8;
-    public static final int LEVEL_2_CLIMBER_AND_ELEVATOR = 9;
-    public static final int FORCE_TELEOP = 10;
-    public static final int FORCE_TELEOP_FAILSAFE = 11;
+    public static final int FORCE_TELEOP = 9;
+    public static final int FORCE_TELEOP_FAILSAFE = 10;
+    public static final int CARRIAGE_FRONT_HATCH = 11;
+    public static final int CARRIAGE_PLACE_HATCH = 12;
 
 }

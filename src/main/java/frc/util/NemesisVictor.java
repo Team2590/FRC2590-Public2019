@@ -72,7 +72,7 @@ public class NemesisVictor extends VictorSPX implements PIDOutput {
                 bpEnabled = true;
                 System.out.printf("Burnout Protection Enabled for PDP Channel %d \n", pdpChannel);
             }
-            System.out.printf("im in burnout mode \n");
+            //System.out.printf("im in burnout mode \n");
             set(ControlMode.PercentOutput, output * 0.2);
         }
     }

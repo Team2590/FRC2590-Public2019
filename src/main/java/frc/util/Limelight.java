@@ -124,6 +124,14 @@ public class Limelight extends Subsystem implements LimelightSettings {
     }
   }
 
+  public boolean has3DLoc() {
+    return (Math.abs(camtran[CAMTRAN_YAW]) > 0.0001);
+  }
+
+  public boolean hasTarget() {
+    return (tv == 1);
+  }
+
   /**
    * Calculates angle to become perpendicular to target
    * 

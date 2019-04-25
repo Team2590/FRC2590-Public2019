@@ -19,7 +19,8 @@ public interface CarriageSettings {
     public static final double CARRIAGE_KA = 0.0015;
 
     public static final double CARRIAGE_MAX_VEL = 120.0;
-    public static final double CARRIAGE_MAX_ACC = 360.0;
+    public static final double CARRIAGE_MAX_ACC = 360.0; //360
+    public static final double CARRIAGE_SLOW_ACC = 180.0;
     public static final double CARRIAGE_TOLERANCE = 5.0;
 
     public static final double kP_HOLD_CONSTANT = 0.0275; //0.0275
@@ -28,9 +29,10 @@ public interface CarriageSettings {
 
     public static final double FRONT_POSITION = 175.0;
     public static final double BACK_POSITION = 20.0; //not set to zero to that it doest overflow to 360
-    public static final double UPRIGHT_POSITION = 57.5;
+    public static final double UPRIGHT_POSITION = 57.0;
     public static final double TOP_CARGO_POSITION = 135.0;
-    public static final double LATCH_POSITION = 40.0;
+    public static final double LATCH_POSITION = 47.5;
+    public static final double FRONT_HATCH_POSITION = 95.0;
 
     public static final double CURRENT_LIMIT = 20.0;
     public static final double ROLL_AVG_TIME = 5.0;

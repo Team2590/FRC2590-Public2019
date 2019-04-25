@@ -52,10 +52,10 @@ import edu.wpi.first.wpilibj.Joystick;
    * @return banded val of the joysticks x axis
    */
   public double getXBanded() {
-    if(Math.abs(this.getX()) - deadBandX < 0) {
+    if(Math.abs(this.getX()) < deadBandX) {
       return 0.0;
     }
-    return this.getX();
+    return Math.signum(this.getX()) * (Math.abs(this.getX() - deadBandX) / (1 - deadBandX));
   }
 
 
@@ -64,10 +64,11 @@ import edu.wpi.first.wpilibj.Joystick;
    * @return banded val of the joysticks  y axis
    */
   public double getYBanded() {
-    if(Math.abs(this.getY()) - deadBandY < 0) {
+    if(Math.abs(this.getY()) < deadBandY) {
+       
       return 0.0;
     }
-    return this.getY();
+    return Math.signum(this.getY()) * (Math.abs(this.getY() - deadBandY) / (1 - deadBandY));
   }
 
   /**

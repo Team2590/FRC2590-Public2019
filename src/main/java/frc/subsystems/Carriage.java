@@ -54,9 +54,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
   private double errorSum;
   private double lastError;
 
-  private boolean isInDelay;
   private boolean cutPower;
-  private int delayCounter;
 
   public Carriage() {
     pdp = new PowerDistributionPanel();
@@ -81,9 +79,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
     errorSum = 0.0;
     lastError = 0.0;
 
-    isInDelay = false;
     cutPower = false;
-    delayCounter = 0;
   }
 
   public void update() {
@@ -150,6 +146,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    */
 
   public void backPosition() {
+    setFastProfile();
     swingCarriage(BACK_POSITION);
   }
 
@@ -157,6 +154,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    * Flips the carriage to the front position
    */
   public void frontPosition() {
+    setFastProfile();
     swingCarriage(FRONT_POSITION);
   }
 
@@ -164,6 +162,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    * Flips the carriage to the latch position on the elevator
    */
   public void latchPosition() {
+    setFastProfile();
     swingCarriage(LATCH_POSITION);
   }
 
@@ -172,6 +171,7 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    * pendulum
    */
   public void uprightPosition() {
+    setFastProfile();
     swingCarriage(UPRIGHT_POSITION);
   }
 
@@ -179,7 +179,21 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    * Flips the carriage to the top cargo position
    */
   public void topCargoPosition() {
+    setFastProfile();
     swingCarriage(TOP_CARGO_POSITION);
+  }
+
+  public void frontHatchPosition() {
+    setSlowProfile();
+    swingCarriage(FRONT_HATCH_POSITION);
+  }
+
+  public void setSlowProfile() {
+    carriageController.setMaxAcc(CARRIAGE_SLOW_ACC);
+  }
+
+  public void setFastProfile() {
+    carriageController.setMaxAcc(CARRIAGE_MAX_ACC);
   }
 
   /**
@@ -208,28 +222,6 @@ public class Carriage extends Subsystem implements RobotMap, CarriageSettings, F
    */
   public boolean getCurrentOrientation() {
     return carriagePot.get() > 100.0;
-  }
-
-  public boolean getDelayState() {
-    return isInDelay;
-  }
-
-  public int getDelayCount() {
-    return delayCounter;
-  }
-
-  public void startDelay() {
-    delayCounter = 0;
-    isInDelay = true;
-  }
-
-  public void stopDelay() {
-    delayCounter = 0;
-    isInDelay = false;
-  }
-
-  public void incrementCounter() {
-    delayCounter++;
   }
 
   /**

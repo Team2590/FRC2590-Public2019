@@ -12,6 +12,7 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.controllers.ConstantCurrent;
@@ -19,6 +20,7 @@ import frc.controllers.MotionProfile;
 import frc.robot.RobotMap;
 import frc.settings.ElevatorSettings;
 import frc.util.NemesisCANEncoder;
+import frc.util.SoftStop;
 
 /**
  * Moves the Cargo and Hatch Panels to set heights to score points
@@ -60,12 +62,14 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
   private ConstantCurrent manualController;
 
+  private SoftStop climbSoftStop;
+
+  private PowerDistributionPanel pdp;
+
   // setpoint to hold carriage in place after moving
   private double setpoint;
 
   private boolean manual;
-  private boolean isInDelay;
-  private int delayCounter;
 
   public Elevator() {
     elevatorMotor = new CANSparkMax(ELEVATOR_MOTOR, MotorType.kBrushless);
@@ -90,11 +94,13 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
     manualController = new ConstantCurrent(externalEncoder, elevatorMotor);
 
+    climbSoftStop = new SoftStop(40.0, 12.0, 0.08, ELEVATOR_CURRENT_CONTROL_CONSTANT);
+
+    pdp = new PowerDistributionPanel();
+
     setpoint = 0.0;
 
     manual = false;
-    isInDelay = false;
-    delayCounter = 0;
   }
 
   // called every loop of teleop periodic
@@ -137,6 +143,11 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
   }
 
   public void moveSmooth(double setpoint) {
+    if(setpoint < getHeight()) { //reduces speed when dropping elevator
+      setProfileSlow();
+    } else {
+      setProfileFast();
+    }
     manual = false;
     elevatorController.setSetpoint(setpoint);
     this.setpoint = setpoint;
@@ -175,6 +186,11 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
     elevatorController.setMaxAcc(ELEVATOR_SLOW_ACC);
   }
 
+  public void climbThree(double pwr) {
+    double adjustedVoltage = pwr - climbSoftStop.calculateOffset(pdp.getCurrent(3));
+    moveManually(adjustedVoltage); //when testing, use adjusted voltage
+  }
+
   public double getHeight() {
     return externalEncoder.getDistance();
   }
@@ -193,28 +209,6 @@ public class Elevator extends Subsystem implements RobotMap, ElevatorSettings {
 
   public void enableHardstop() {
     hardstop.set(false);
-  }
-
-  public boolean getDelayState() {
-    return isInDelay;
-  }
-
-  public int getDelayCount() {
-    return delayCounter;
-  }
-
-  public void startDelay() {
-    delayCounter = 0;
-    isInDelay = true;
-  }
-
-  public void stopDelay() {
-    delayCounter = 0;
-    isInDelay = false;
-  }
-
-  public void incrementCounter() {
-    delayCounter++;
   }
 
   @Override

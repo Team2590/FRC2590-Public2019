@@ -8,8 +8,7 @@
 package frc.controllers;
 
 import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.PIDSource;
-import edu.wpi.first.wpilibj.PIDSourceType;
+import frc.robot.Robot;
 
 /**
  * Add your docs here.
@@ -84,8 +83,8 @@ public class SteeringGuidance implements Controller {
             turnRate = rInv * velocity;
         }
 
-        System.out.println("horizontalOffset " + horizontalOffset + " yaw " + yaw + " z " + z + " x " + x
-                + " turn rate " + turnRate + " velocity " + velocity);
+        // System.out.println(horizontalOffset + " " + yaw + " " + z + " " + x
+        // + " " + turnRate + " " + velocity);
 
         return (Double.isNaN(drivetrainConstant * turnRate) ? 0.0 : drivetrainConstant * turnRate);
     }
@@ -120,9 +119,9 @@ public class SteeringGuidance implements Controller {
         lastZ = this.z;
         lastX = this.x;
 
-        System.out.println("horizontalOffset " + horizontalOffset + "this.horizontalOffset " + this.horizontalOffset
-                + " yaw " + yaw + " this.yaw " + this.yaw + " z " + z + " this.z " + this.z + " x " + x + " this.x "
-                + this.x + " retVal " + kP * error);
+        System.out.println(horizontalOffset + " " + this.horizontalOffset + " " + yaw + " " + this.yaw + " " + z + " "
+                + this.z + " " + x + " " + this.x + " " + kP * error + " " + Robot.getLimelightInstance().hasTarget()
+                + " " + Robot.getLimelightInstance().has3DLoc());
 
         // in case kP * error is not a number, sets motor power to 0.0 so that robot
         // does not spin in circles
@@ -161,7 +160,7 @@ public class SteeringGuidance implements Controller {
         double previousZ = lastZ;
         double previousYaw = lastYaw;
 
-        return previousZ + dt * velocity * Math.cos(previousYaw);
+        return previousZ + dt * velocity * Math.cos(Math.toRadians(previousYaw));
     }
 
     /**
@@ -178,7 +177,7 @@ public class SteeringGuidance implements Controller {
         double previousX = lastX;
         double previousYaw = lastYaw;
 
-        return previousX + dt * velocity * Math.sin(previousYaw);
+        return previousX - dt * velocity * Math.sin(Math.toRadians(previousYaw));
     }
 
     /**
